@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { AuthWrapper } from './components/Auth/AuthWrapper';
+import { StorageSetup } from './components/Auth/StorageSetup';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { InventoryList } from './components/Inventory/InventoryList';
 import { SalesModule } from './components/Sales/SalesModule';
+import { DataManagement } from './components/Settings/DataManagement';
 import { NotificationToast } from './components/Notifications/NotificationToast';
 import { initializeDatabase } from './database';
 import { usePharmacyStore } from './store';
+import { useAuthStore } from './store/authStore';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const { addNotification } = usePharmacyStore();
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    initializeApp();
+    if (isAuthenticated) {
+      initializeApp();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const initializeApp = async () => {
@@ -37,6 +46,10 @@ function App() {
         return <InventoryList />;
       case 'sales':
         return <SalesModule />;
+      case 'storage':
+        return <StorageSetup />;
+      case 'data-management':
+        return <DataManagement />;
       case 'expiry':
         return <div className="p-6"><h1 className="text-2xl font-bold">Expiry Alerts</h1><p>Coming soon...</p></div>;
       case 'low-stock':
@@ -51,6 +64,15 @@ function App() {
         return <Dashboard />;
     }
   };
+
+  // Show auth wrapper if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <AuthWrapper>
+        <div>This should not be visible</div>
+      </AuthWrapper>
+    );
+  }
 
   if (loading) {
     return (

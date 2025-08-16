@@ -9,7 +9,9 @@ import {
   X,
   Calendar,
   TrendingDown,
-  Shield
+  Shield,
+  Database,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { usePharmacyStore } from '../../store';
 
@@ -28,6 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'expiry', label: 'Expiry Alert', icon: AlertTriangle },
     { id: 'low-stock', label: 'Low Stock', icon: TrendingDown },
     { id: 'schedule-h1', label: 'Schedule H1', icon: Shield },
+    { id: 'storage', label: 'Storage Setup', icon: Database },
+    { id: 'data-management', label: 'Data Management', icon: SettingsIcon },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
