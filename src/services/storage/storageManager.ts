@@ -34,29 +34,44 @@ export class StorageManager {
       try {
         switch (storage) {
           case 'google-drive':
-            results['google-drive'] = await this.googleDrive.storeEncryptedData(
-              data,
-              dataType,
-              this.config.encryptionKey
-            );
+            try {
+              results['google-drive'] = await this.googleDrive.storeEncryptedData(
+                data,
+                dataType,
+                this.config.encryptionKey
+              );
+            } catch (error) {
+              console.warn('Google Drive storage failed, continuing with other options:', error);
+              errors.push(`google-drive: ${error}`);
+            }
             break;
 
           case 'supabase':
-            results['supabase'] = await this.supabaseStorage.storeEncryptedData(
-              this.config.userId,
-              data,
-              dataType,
-              this.config.encryptionKey
-            );
+            try {
+              results['supabase'] = await this.supabaseStorage.storeEncryptedData(
+                this.config.userId,
+                data,
+                dataType,
+                this.config.encryptionKey
+              );
+            } catch (error) {
+              console.warn('Supabase storage failed, continuing with other options:', error);
+              errors.push(`supabase: ${error}`);
+            }
             break;
 
           case 'local':
-            results['local'] = LocalStorage.storeEncryptedData(
-              this.config.userId,
-              data,
-              dataType,
-              this.config.encryptionKey
-            );
+            try {
+              results['local'] = LocalStorage.storeEncryptedData(
+                this.config.userId,
+                data,
+                dataType,
+                this.config.encryptionKey
+              );
+            } catch (error) {
+              console.warn('Local storage failed:', error);
+              errors.push(`local: ${error}`);
+            }
             break;
         }
       } catch (error) {
@@ -64,7 +79,8 @@ export class StorageManager {
       }
     }
 
-    if (errors.length === this.config.enabledStorages.length) {
+    // Only throw error if ALL storage options failed AND we have no successful results
+    if (Object.keys(results).length === 0 && errors.length > 0) {
       throw new Error(`All storage options failed: ${errors.join(', ')}`);
     }
 

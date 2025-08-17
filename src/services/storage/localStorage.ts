@@ -13,6 +13,22 @@ export class LocalStorage {
     encryptionKey: string
   ): string {
     try {
+      // Check if localStorage is available
+      if (typeof Storage === 'undefined') {
+        throw new Error('localStorage is not supported in this browser');
+      }
+
+      // Check storage quota
+      if (navigator.storage && navigator.storage.estimate) {
+        navigator.storage.estimate().then(estimate => {
+          const usage = estimate.usage || 0;
+          const quota = estimate.quota || 0;
+          if (usage / quota > 0.9) {
+            console.warn('localStorage is nearly full, consider clearing old data');
+          }
+        });
+      }
+
       const encryptedContent = EncryptionService.encryptData(data, encryptionKey);
       const id = crypto.randomUUID();
       const storageKey = `${this.PREFIX}${userId}_${dataType}_${id}`;
@@ -27,14 +43,48 @@ export class LocalStorage {
         updatedAt: new Date().toISOString()
       };
 
-      localStorage.setItem(storageKey, JSON.stringify(storageItem));
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(storageItem));
+      } catch (storageError) {
+        if (storageError.name === 'QuotaExceededError') {
+          // Try to clear some old data and retry
+          this.clearOldData(userId);
+          localStorage.setItem(storageKey, JSON.stringify(storageItem));
+        } else {
+          throw storageError;
+        }
+      }
       
       // Update index
       this.updateIndex(userId, id, dataType);
       
       return id;
     } catch (error) {
+      console.error('localStorage error:', error);
       throw new Error(`Failed to store data locally: ${error}`);
+    }
+  }
+
+  private static clearOldData(userId: string): void {
+    try {
+      const index = this.getIndex(userId);
+      // Remove oldest 10% of items
+      const itemsToRemove = Math.ceil(index.length * 0.1);
+      const sortedItems = index.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      for (let i = 0; i < itemsToRemove; i++) {
+        const item = sortedItems[i];
+        const storageKey = `${this.PREFIX}${userId}_${item.dataType}_${item.id}`;
+        localStorage.removeItem(storageKey);
+      }
+      
+      // Update index
+      const updatedIndex = index.slice(itemsToRemove);
+      localStorage.setItem(`${this.PREFIX}index_${userId}`, JSON.stringify(updatedIndex));
+    } catch (error) {
+      console.warn('Failed to clear old data:', error);
     }
   }
 

@@ -12,8 +12,31 @@ export class SupabaseStorage {
     encryptionKey: string
   ): Promise<string> {
     try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const encryptedContent = EncryptionService.encryptData(data, encryptionKey);
       
+      // First, check if the encrypted_data table exists
+      const { data: tables, error: tablesError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_name', 'encrypted_data')
+        .eq('table_schema', 'public');
+
+      if (tablesError || !tables || tables.length === 0) {
+        // Table doesn't exist, create it
+        const { error: createError } = await supabase.rpc('create_encrypted_data_table');
+        if (createError) {
+          console.warn('Could not create encrypted_data table:', createError);
+          // Fallback to storing in user metadata or profiles table
+          return await this.storeInProfilesTable(userId, data, dataType, encryptedContent);
+        }
+      }
+
       const { data: result, error } = await supabase
         .from('encrypted_data')
         .insert({
@@ -25,11 +48,50 @@ export class SupabaseStorage {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.warn('Failed to insert into encrypted_data, trying profiles table:', error);
+        return await this.storeInProfilesTable(userId, data, dataType, encryptedContent);
+      }
+      
       return result.id;
     } catch (error) {
+      console.error('Supabase storage error:', error);
       throw new Error(`Failed to store data in Supabase: ${error}`);
     }
+  }
+
+  private async storeInProfilesTable(
+    userId: string,
+    data: any,
+    dataType: string,
+    encryptedContent: string
+  ): Promise<string> {
+    // Fallback: store in profiles table as JSON
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('encrypted_data')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError;
+    }
+
+    const existingData = profile?.encrypted_data || {};
+    const dataId = crypto.randomUUID();
+    existingData[dataId] = {
+      data_type: dataType,
+      encrypted_content: encryptedContent,
+      created_at: new Date().toISOString()
+    };
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ encrypted_data: existingData })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+    return dataId;
   }
 
   /**

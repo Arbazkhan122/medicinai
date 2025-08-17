@@ -17,10 +17,23 @@ export class GoogleDriveStorage {
    */
   async authenticate(): Promise<boolean> {
     try {
+      // Check if Google API key and client ID are configured
+      const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      
+      if (!apiKey || !clientId) {
+        console.warn('Google Drive API credentials not configured');
+        throw new Error('Google Drive API credentials not configured. Please add VITE_GOOGLE_API_KEY and VITE_GOOGLE_CLIENT_ID to your environment variables.');
+      }
+
       // Initialize Google API
       await this.loadGoogleAPI();
       
-      const authInstance = window.gapi.auth2.getAuthInstance();
+      const authInstance = (window as any).gapi.auth2.getAuthInstance();
+      if (!authInstance) {
+        throw new Error('Google Auth instance not initialized');
+      }
+      
       const user = await authInstance.signIn({
         scope: 'https://www.googleapis.com/auth/drive.file'
       });
@@ -31,13 +44,13 @@ export class GoogleDriveStorage {
       return true;
     } catch (error) {
       console.error('Google Drive authentication failed:', error);
-      return false;
+      throw new Error(`Google Drive authentication failed: ${error}`);
     }
   }
 
   private async loadGoogleAPI(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (window.gapi) {
+      if ((window as any).gapi) {
         resolve();
         return;
       }
@@ -45,8 +58,8 @@ export class GoogleDriveStorage {
       const script = document.createElement('script');
       script.src = 'https://apis.google.com/js/api.js';
       script.onload = () => {
-        window.gapi.load('auth2:client', () => {
-          window.gapi.client.init({
+        (window as any).gapi.load('auth2:client', () => {
+          (window as any).gapi.client.init({
             apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
             clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
@@ -54,7 +67,7 @@ export class GoogleDriveStorage {
           }).then(resolve).catch(reject);
         });
       };
-      script.onerror = reject;
+      script.onerror = () => reject(new Error('Failed to load Google API script'));
       document.head.appendChild(script);
     });
   }

@@ -39,6 +39,12 @@ export const StorageSetup: React.FC = () => {
       setStorageStats(stats);
     } catch (error) {
       console.error('Failed to load storage stats:', error);
+      // Set default stats if loading fails
+      setStorageStats({
+        'local': { itemCount: 0, estimatedSize: '0 KB' },
+        'supabase': { itemCount: 0, lastSync: 'Never' },
+        'google-drive': { itemCount: 0, lastSync: 'Never' }
+      });
     }
   };
 
@@ -75,23 +81,41 @@ export const StorageSetup: React.FC = () => {
       
       switch (storageType) {
         case 'google-drive':
-          const googleDrive = new GoogleDriveStorage();
-          await googleDrive.storeEncryptedData(testData, 'test', encryptionKey);
+          try {
+            const googleDrive = new GoogleDriveStorage();
+            await googleDrive.storeEncryptedData(testData, 'test', encryptionKey);
+            alert(`${storageType} storage test successful!`);
+          } catch (error) {
+            alert(`${storageType} storage test failed: ${error}`);
+            return;
+          }
           break;
           
         case 'supabase':
-          const supabaseStorage = new SupabaseStorage();
-          await supabaseStorage.storeEncryptedData(user.id, testData, 'test', encryptionKey);
+          try {
+            const supabaseStorage = new SupabaseStorage();
+            await supabaseStorage.storeEncryptedData(user.id, testData, 'test', encryptionKey);
+            alert(`${storageType} storage test successful!`);
+          } catch (error) {
+            alert(`${storageType} storage test failed: ${error}`);
+            return;
+          }
           break;
           
         case 'local':
-          LocalStorage.storeEncryptedData(user.id, testData, 'test', encryptionKey);
+          try {
+            LocalStorage.storeEncryptedData(user.id, testData, 'test', encryptionKey);
+            alert(`${storageType} storage test successful!`);
+          } catch (error) {
+            alert(`${storageType} storage test failed: ${error}`);
+            return;
+          }
           break;
       }
       
-      alert(`${storageType} storage test successful!`);
       loadStorageStats();
     } catch (error) {
+      console.error('Storage test error:', error);
       alert(`${storageType} storage test failed: ${error}`);
     } finally {
       setLoading(false);

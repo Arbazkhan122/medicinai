@@ -34,6 +34,7 @@ export type Database = {
           last_login?: string;
           storage_preferences: string[];
           encryption_key_hash: string;
+          encrypted_data?: any;
           created_at?: string;
           updated_at?: string;
         };
@@ -48,6 +49,7 @@ export type Database = {
           last_login?: string;
           storage_preferences?: string[];
           encryption_key_hash?: string;
+          encrypted_data?: any;
           created_at?: string;
           updated_at?: string;
         };
