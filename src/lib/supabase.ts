@@ -8,10 +8,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type Database = {
   public: {
     Tables: {
-      user_profiles: {
+      profiles: {
         Row: {
           id: string;
-          user_id: string;
+          full_name: string;
+          email: string;
+          role: string;
+          license_number?: string;
+          phone?: string;
+          is_active: boolean;
+          last_login?: string;
           storage_preferences: string[];
           encryption_key_hash: string;
           created_at: string;
@@ -19,7 +25,13 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          user_id: string;
+          full_name: string;
+          email: string;
+          role?: string;
+          license_number?: string;
+          phone?: string;
+          is_active?: boolean;
+          last_login?: string;
           storage_preferences: string[];
           encryption_key_hash: string;
           created_at?: string;
@@ -27,7 +39,13 @@ export type Database = {
         };
         Update: {
           id?: string;
-          user_id?: string;
+          full_name?: string;
+          email?: string;
+          role?: string;
+          license_number?: string;
+          phone?: string;
+          is_active?: boolean;
+          last_login?: string;
           storage_preferences?: string[];
           encryption_key_hash?: string;
           created_at?: string;

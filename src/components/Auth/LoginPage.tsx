@@ -33,9 +33,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
       if (authData.user) {
         // Get user profile with encryption key
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
-          .eq('user_id', authData.user.id)
+          .eq('id', authData.user.id)
           .single();
 
         if (profileError) throw profileError;

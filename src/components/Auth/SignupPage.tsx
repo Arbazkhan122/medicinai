@@ -130,9 +130,11 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       if (authData.user) {
         // Create user profile with storage preferences
         const { error: profileError } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .insert({
-            user_id: authData.user.id,
+            id: authData.user.id,
+            full_name: formData.name,
+            email: formData.email,
             storage_preferences: selectedStorages,
             encryption_key_hash: encryptionKeyHash
           });
