@@ -17,17 +17,7 @@ export const AuthWrapper: React.FC<{ children: React.ReactNode }> = ({ children 
   switch (authMode) {
     case 'signup':
       return (
-        <div>
-          <SignupPage />
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
-            <button
-              onClick={() => setAuthMode('login')}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-            >
-              Already have an account? Sign In
-            </button>
-          </div>
-        </div>
+        <SignupPage onSwitchToLogin={() => setAuthMode('login')} />
       );
       
     case 'storage':
@@ -35,17 +25,7 @@ export const AuthWrapper: React.FC<{ children: React.ReactNode }> = ({ children 
       
     default:
       return (
-        <div>
-          <LoginPage />
-          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
-            <button
-              onClick={() => setAuthMode('signup')}
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-            >
-              Don't have an account? Create Account
-            </button>
-          </div>
-        </div>
+        <LoginPage onSwitchToSignup={() => setAuthMode('signup')} />
       );
   }
 };

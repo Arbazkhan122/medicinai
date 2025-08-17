@@ -3,7 +3,11 @@ import { Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../store/authStore';
 
-export const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  onSwitchToSignup: () => void;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -148,7 +152,10 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Don't have an account?{' '}
-              <button className="text-blue-600 hover:text-blue-700 font-medium">
+              <button 
+                onClick={onSwitchToSignup}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
                 Create Account
               </button>
             </p>

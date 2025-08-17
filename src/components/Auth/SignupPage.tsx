@@ -5,7 +5,11 @@ import { EncryptionService } from '../../services/encryption';
 import { useAuthStore } from '../../store/authStore';
 import type { StorageOption } from '../../services/storage/storageManager';
 
-export const SignupPage: React.FC = () => {
+interface SignupPageProps {
+  onSwitchToLogin: () => void;
+}
+
+export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -408,7 +412,10 @@ export const SignupPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <button className="text-blue-600 hover:text-blue-700 font-medium">
+              <button 
+                onClick={onSwitchToLogin}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
                 Sign In
               </button>
             </p>
