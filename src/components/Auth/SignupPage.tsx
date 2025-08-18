@@ -128,24 +128,6 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create user profile with storage preferences
-        const profileData = {
-          id: authData.user.id,
-          full_name: formData.name,
-          email: formData.email
-        };
-
-        // Insert basic profile data without storage_preferences column
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert(profileData);
-
-          if (profileError) throw profileError;
-        } catch (error: any) {
-          throw error;
-        }
-
         // Set user in store
         setUser({
           id: authData.user.id,
@@ -157,8 +139,8 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
 
         setEncryptionKey(encryptionKey);
 
-        // Show success message
-        alert('Account created successfully! Please check your email for verification.');
+        // Show success message - profile will be created automatically by database trigger
+        alert('Account created successfully! Please check your email for verification. You can sign in once verified.');
       }
     } catch (error: any) {
       setError(error.message || 'Signup failed');
