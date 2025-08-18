@@ -18,8 +18,6 @@ export type Database = {
           phone?: string;
           is_active: boolean;
           last_login?: string;
-          storage_preferences?: string[];
-          encryption_key_hash?: string;
           created_at: string;
           updated_at: string;
         };
@@ -32,9 +30,6 @@ export type Database = {
           phone?: string;
           is_active?: boolean;
           last_login?: string;
-          storage_preferences?: string[];
-          encryption_key_hash?: string;
-          encrypted_data?: any;
           created_at?: string;
           updated_at?: string;
         };
@@ -47,9 +42,6 @@ export type Database = {
           phone?: string;
           is_active?: boolean;
           last_login?: string;
-          storage_preferences?: string[];
-          encryption_key_hash?: string;
-          encrypted_data?: any;
           created_at?: string;
           updated_at?: string;
         };
