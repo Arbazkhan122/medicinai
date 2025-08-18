@@ -132,31 +132,18 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
         const profileData = {
           id: authData.user.id,
           full_name: formData.name,
-          email: formData.email,
-          storage_preferences: selectedStorages
+          email: formData.email
         };
 
-        // Only add encryption_key_hash if the column exists
+        // Insert basic profile data without storage_preferences column
         try {
           const { error: profileError } = await supabase
             .from('profiles')
-            .insert({
-              ...profileData,
-              encryption_key_hash: encryptionKeyHash
-            });
+            .insert(profileData);
 
           if (profileError) throw profileError;
         } catch (error: any) {
-          // If encryption_key_hash column doesn't exist, insert without it
-          if (error.message?.includes('encryption_key_hash')) {
-            const { error: fallbackError } = await supabase
-              .from('profiles')
-              .insert(profileData);
-            
-            if (fallbackError) throw fallbackError;
-          } else {
-            throw error;
-          }
+          throw error;
         }
 
         // Set user in store
@@ -165,7 +152,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
           email: authData.user.email!,
           name: formData.name,
           storagePreferences: selectedStorages,
-          encryptionKeyHash
+          encryptionKeyHash: encryptionKeyHash
         });
 
         setEncryptionKey(encryptionKey);
