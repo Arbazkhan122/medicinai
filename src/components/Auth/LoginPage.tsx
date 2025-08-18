@@ -44,8 +44,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
         setUser({
           id: authData.user.id,
           email: authData.user.email!,
-          storagePreferences: profile.storage_preferences,
-          encryptionKeyHash: profile.encryption_key_hash
+          storagePreferences: profile.storage_preferences || ['local'],
+          encryptionKeyHash: profile.encryption_key_hash || ''
         });
 
         // For demo purposes, we'll use a derived key
