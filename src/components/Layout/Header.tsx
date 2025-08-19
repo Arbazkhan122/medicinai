@@ -1,20 +1,45 @@
 import React from 'react';
-import { Search, Bell, User, Menu, ShoppingCart } from 'lucide-react';
+import { Search, Bell, User, Menu, ShoppingCart, LogOut } from 'lucide-react';
 import { usePharmacyStore } from '../../store';
+import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
 
 export const Header: React.FC = () => {
   const { 
-    currentUser, 
     sidebarOpen, 
     setSidebarOpen, 
     searchQuery, 
     setSearchQuery,
     cartItems,
-    notifications 
+    notifications,
+    addNotification
   } = usePharmacyStore();
+  
+  const { user, logout } = useAuthStore();
 
   const unreadNotifications = notifications.filter(n => n.type === 'warning' || n.type === 'error').length;
 
+  const handleLogout = async () => {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        addNotification('error', 'Failed to logout properly');
+      }
+      
+      // Clear application state
+      logout();
+      
+      // Clear any additional stored data
+      localStorage.removeItem('google_drive_token');
+      
+      addNotification('success', 'Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      addNotification('error', 'An error occurred during logout');
+    }
+  };
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 py-3">
@@ -74,14 +99,24 @@ export const Header: React.FC = () => {
           </button>
 
           {/* User menu */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-gray-600" />
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">{currentUser?.name}</p>
-              <p className="text-xs text-gray-500">{currentUser?.role}</p>
+              <p className="text-sm font-medium text-gray-900">{user?.name || user?.email}</p>
+              <p className="text-xs text-gray-500">Authenticated User</p>
             </div>
+            
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
+              title="Logout"
+              aria-label="Logout from application"
+            >
+              <LogOut className="w-5 h-5 group-hover:text-red-600" />
+            </button>
           </div>
         </div>
       </div>

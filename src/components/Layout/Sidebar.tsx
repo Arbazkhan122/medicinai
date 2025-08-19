@@ -11,9 +11,12 @@ import {
   TrendingDown,
   Shield,
   Database,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  LogOut
 } from 'lucide-react';
 import { usePharmacyStore } from '../../store';
+import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
 
 interface SidebarProps {
   activeTab: string;
@@ -21,7 +24,25 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { sidebarOpen, setSidebarOpen } = usePharmacyStore();
+  const { sidebarOpen, setSidebarOpen, addNotification } = usePharmacyStore();
+  const { logout } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        addNotification('error', 'Failed to logout properly');
+      }
+      
+      logout();
+      localStorage.removeItem('google_drive_token');
+      addNotification('success', 'Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      addNotification('error', 'An error occurred during logout');
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -97,13 +118,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         </nav>
 
         {/* Quick actions */}
-        <div className="absolute bottom-4 left-4 right-4">
+        <div className="absolute bottom-4 left-4 right-4 space-y-3">
           <div className="bg-blue-50 rounded-lg p-4">
             <h3 className="text-sm font-medium text-blue-900 mb-2">Quick Sale</h3>
             <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
               Start New Sale
             </button>
           </div>
+          
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
     </>
