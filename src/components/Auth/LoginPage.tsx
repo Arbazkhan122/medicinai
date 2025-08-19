@@ -45,7 +45,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
         setEncryptionKey(derivedKey);
       }
     } catch (error: any) {
-      setError(error.message || 'Login failed');
+      if (error.message === 'Email not confirmed') {
+        setError('Login failed: Your email address has not been confirmed. Please check your inbox for a verification link.');
+      } else {
+        setError(error.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
