@@ -31,21 +31,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Get user profile with encryption key
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, role, license_number, phone, is_active, last_login, created_at, updated_at')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
         // Set user in store
         setUser({
           id: authData.user.id,
           email: authData.user.email!,
           storagePreferences: ['local'], // Default to local storage
-          encryptionKeyHash: profile.encryption_key_hash || ''
+          encryptionKeyHash: ''
         });
 
         // For demo purposes, we'll use a derived key
