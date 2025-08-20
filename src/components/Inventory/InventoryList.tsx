@@ -4,6 +4,7 @@ import { db } from '../../database';
 import { Medicine, Batch } from '../../types';
 import { format } from 'date-fns';
 import { usePharmacyStore } from '../../store';
+import { AddMedicineModal } from './AddMedicineModal';
 
 interface MedicineWithBatches extends Medicine {
   batches: Batch[];
@@ -15,6 +16,7 @@ export const InventoryList: React.FC = () => {
   const [medicines, setMedicines] = useState<MedicineWithBatches[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'low-stock' | 'expiring'>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
   const { searchQuery, addNotification } = usePharmacyStore();
 
   useEffect(() => {
@@ -108,6 +110,10 @@ export const InventoryList: React.FC = () => {
           <p className="text-gray-600">Manage your medicine stock and batches</p>
         </div>
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
           <Plus className="w-4 h-4" />
           <span>Add Medicine</span>
         </button>
@@ -214,6 +220,13 @@ export const InventoryList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Add Medicine Modal */}
+      <AddMedicineModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onMedicineAdded={loadInventory}
+      />
     </div>
   );
 };
