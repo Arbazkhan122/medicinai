@@ -115,7 +115,7 @@ export const initializeDatabase = async () => {
       }
     ];
 
-    await db.medicines.bulkAdd(sampleMedicines);
-    await db.batches.bulkAdd(sampleBatches);
+    await db.medicines.bulkPut(sampleMedicines);
+    await db.batches.bulkPut(sampleBatches);
   }
 };
