@@ -2,9 +2,10 @@ import { db } from '../database';
 import { AuditLog } from '../types';
 
 export class AuditService {
-  static async logAction(action: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
+  static async logAction(action: Omit<AuditLog, 'id' | 'timestamp' | 'userId'> & { userId?: string }): Promise<void> {
     const auditLog: AuditLog = {
       ...action,
+      userId: action.userId || 'system-user',
       id: crypto.randomUUID(),
       timestamp: new Date()
     };

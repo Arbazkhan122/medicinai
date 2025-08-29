@@ -28,7 +28,7 @@ export const SalesModule: React.FC = () => {
   const [discount, setDiscount] = useState(0);
   const [processing, setProcessing] = useState(false);
   
-  const { currentUser, addNotification } = usePharmacyStore();
+  const { addNotification } = usePharmacyStore();
 
   useEffect(() => {
     if (searchQuery.length > 2) {
@@ -135,11 +135,6 @@ export const SalesModule: React.FC = () => {
       return;
     }
 
-    if (!currentUser) {
-      addNotification('error', 'User not authenticated');
-      return;
-    }
-
     setProcessing(true);
 
     try {
@@ -172,7 +167,7 @@ export const SalesModule: React.FC = () => {
         discountAmount,
         paymentMethod,
         saleDate: new Date(),
-        pharmacistId: currentUser.id
+        pharmacistId: 'system-user'
       };
 
       // Save sale
@@ -200,19 +195,10 @@ export const SalesModule: React.FC = () => {
             prescriptionNumber: prescriptionNumber || 'Not provided',
             quantityDispensed: item.quantity,
             dispensedDate: new Date(),
-            pharmacistSignature: currentUser.name
+            pharmacistSignature: 'System'
           });
         }
       }
-
-      // Log audit trail
-      await AuditService.logAction({
-        userId: currentUser.id,
-        action: 'SALE',
-        entityType: 'SALE',
-        entityId: sale.id,
-        newData: sale
-      });
 
       // Clear form
       setCart([]);

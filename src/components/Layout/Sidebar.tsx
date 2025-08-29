@@ -7,16 +7,10 @@ import {
   AlertTriangle, 
   Settings,
   X,
-  Calendar,
   TrendingDown,
-  Shield,
-  Database,
-  Settings as SettingsIcon,
-  LogOut
+  Shield
 } from 'lucide-react';
 import { usePharmacyStore } from '../../store';
-import { useAuthStore } from '../../store/authStore';
-import { supabase } from '../../lib/supabase';
 
 interface SidebarProps {
   activeTab: string;
@@ -24,25 +18,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { sidebarOpen, setSidebarOpen, addNotification } = usePharmacyStore();
-  const { logout } = useAuthStore();
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Logout error:', error);
-        addNotification('error', 'Failed to logout properly');
-      }
-      
-      logout();
-      localStorage.removeItem('google_drive_token');
-      addNotification('success', 'Logged out successfully');
-    } catch (error) {
-      console.error('Logout error:', error);
-      addNotification('error', 'An error occurred during logout');
-    }
-  };
+  const { sidebarOpen, setSidebarOpen } = usePharmacyStore();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -51,8 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'expiry', label: 'Expiry Alert', icon: AlertTriangle },
     { id: 'low-stock', label: 'Low Stock', icon: TrendingDown },
     { id: 'schedule-h1', label: 'Schedule H1', icon: Shield },
-    { id: 'storage', label: 'Storage Setup', icon: Database },
-    { id: 'data-management', label: 'Data Management', icon: SettingsIcon },
     { id: 'reports', label: 'Reports', icon: FileText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -125,15 +99,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
               Start New Sale
             </button>
           </div>
-          
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </button>
         </div>
       </aside>
     </>

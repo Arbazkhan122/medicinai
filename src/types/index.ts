@@ -78,12 +78,3 @@ export interface AuditLog {
   timestamp: Date;
   ipAddress?: string;
 }
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'ADMIN' | 'PHARMACIST' | 'STAFF';
-  licenseNumber?: string;
-  createdAt: Date;
-}

@@ -1,11 +1,7 @@
 import { create } from 'zustand';
-import { Medicine, Batch, Sale, User } from '../types';
+import { Medicine, Batch, Sale } from '../types';
 
 interface PharmacyStore {
-  // User state
-  currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
-  
   // UI state
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
@@ -36,17 +32,6 @@ interface PharmacyStore {
 }
 
 export const usePharmacyStore = create<PharmacyStore>((set, get) => ({
-  // User state
-  currentUser: {
-    id: '1',
-    name: 'Dr. Rajesh Kumar',
-    email: 'rajesh@pharmacy.com',
-    role: 'PHARMACIST',
-    licenseNumber: 'PH12345',
-    createdAt: new Date()
-  },
-  setCurrentUser: (user) => set({ currentUser: user }),
-  
   // UI state
   sidebarOpen: false,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
