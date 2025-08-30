@@ -69,6 +69,12 @@ export const InventoryList: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 text-lg">{medicine.brandName}</h3>
                     <p className="text-gray-600 mt-1">{medicine.name}</p>
+                    {medicine.dosage && (
+                      <p className="text-sm text-gray-500">Dosage: {medicine.dosage}</p>
+                    )}
+                    {medicine.medicineType && (
+                      <p className="text-sm text-gray-500">Type: {medicine.medicineType}</p>
+                    )}
                     <div className="flex gap-4 mt-2 text-sm text-gray-500">
                       <span>Manufacturer: {medicine.manufacturer}</span>
                       <span>HSN: {medicine.hsn}</span>
@@ -84,7 +90,7 @@ export const InventoryList: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm text-gray-500">GST: {medicine.gstPercentage}%</span>
+                    <span className="text-sm text-gray-500">GST: {medicine.gst}%</span>
                   </div>
                 </div>
               </div>
