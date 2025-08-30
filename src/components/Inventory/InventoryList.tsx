@@ -3,12 +3,12 @@ import { Plus } from 'lucide-react';
 import { db } from '../../database';
 import { Medicine } from '../../types';
 import { usePharmacyStore } from '../../store';
-import { AddMedicineModal } from './AddMedicineModal';
+import { AddMedicinePage } from './AddMedicinePage';
 
 export const InventoryList: React.FC = () => {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showAddPage, setShowAddPage] = useState(false);
   const { addNotification } = usePharmacyStore();
 
   const fetchMedicines = async () => {
@@ -29,8 +29,17 @@ export const InventoryList: React.FC = () => {
 
   const handleMedicineAdded = () => {
     fetchMedicines(); // Refresh the list
-    setIsAddModalOpen(false);
+    setShowAddPage(false);
   };
+
+  if (showAddPage) {
+    return (
+      <AddMedicinePage
+        onBack={() => setShowAddPage(false)}
+        onMedicineAdded={handleMedicineAdded}
+      />
+    );
+  }
 
   if (loading) {
     return <div className="p-6 text-center">Loading inventory...</div>;
@@ -44,7 +53,7 @@ export const InventoryList: React.FC = () => {
           <p className="text-gray-600">Manage your medicine stock and batches.</p>
         </div>
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setShowAddPage(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -98,12 +107,6 @@ export const InventoryList: React.FC = () => {
           </div>
         </div>
       )}
-
-      <AddMedicineModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onMedicineAdded={handleMedicineAdded}
-      />
     </div>
   );
 };

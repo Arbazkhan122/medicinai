@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { X, Package, Save } from 'lucide-react';
+import { ArrowLeft, Package, Save } from 'lucide-react';
 import { db } from '../../database';
 import { Medicine, Batch } from '../../types';
 import { usePharmacyStore } from '../../store';
 
-interface AddMedicineModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface AddMedicinePageProps {
+  onBack: () => void;
   onMedicineAdded: () => void;
 }
 
-export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
-  isOpen,
-  onClose,
+export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
+  onBack,
   onMedicineAdded
 }) => {
   const [formData, setFormData] = useState({
@@ -74,7 +72,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
           id: crypto.randomUUID(),
           medicineId: newMedicine.id,
           batchNumber: formData.initialBatchNumber || `BATCH-${Date.now()}`,
-          expiryDate: formData.initialExpiryDate ? new Date(formData.initialExpiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Default 1 year from now
+          expiryDate: formData.initialExpiryDate ? new Date(formData.initialExpiryDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           mrp: formData.initialMrp,
           purchasePrice: formData.initialPurchasePrice,
           sellingPrice: formData.initialSellingPrice,
@@ -89,32 +87,8 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
       }
 
       addNotification('success', `Medicine ${formData.brandName} added successfully`);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        genericName: '',
-        brandName: '',
-        dosage: '',
-        medicineType: '',
-        manufacturer: '',
-        scheduleType: 'GENERAL',
-        hsn: '',
-        gst: 12,
-        description: '',
-        initialBatchNumber: '',
-        initialMrp: 0,
-        initialPurchasePrice: 0,
-        initialSellingPrice: 0,
-        initialStockQuantity: 0,
-        initialMinStock: 10,
-        initialMaxStock: 100,
-        initialExpiryDate: '',
-        supplierId: 'DEFAULT'
-      });
-      
       onMedicineAdded();
-      onClose();
+      onBack();
     } catch (error) {
       console.error('Error adding medicine:', error);
       addNotification('error', 'Failed to add medicine');
@@ -123,32 +97,43 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Package className="w-5 h-5 text-blue-600" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={onBack}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Add New Medicine</h1>
+                  <p className="text-sm text-gray-600">Create a new medicine record with initial stock</p>
+                </div>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Add New Medicine</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-8">
-          {/* Medicine Information */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Medicine Information</h3>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Medicine Information Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
+              <Package className="w-5 h-5 text-blue-600" />
+              <span>Medicine Information</span>
+            </h2>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Medicine Name */}
               <div>
@@ -160,7 +145,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., Paracetamol 500mg"
                 />
               </div>
@@ -175,7 +160,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.brandName}
                   onChange={(e) => handleInputChange('brandName', e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., Crocin"
                 />
               </div>
@@ -189,21 +174,37 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   type="text"
                   value={formData.genericName}
                   onChange={(e) => handleInputChange('genericName', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., Paracetamol"
+                />
+              </div>
+
+              {/* Manufacturer */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Manufacturer *
+                </label>
+                <input
+                  type="text"
+                  value={formData.manufacturer}
+                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., GSK, Cipla, Sun Pharma"
                 />
               </div>
 
               {/* Dosage */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dosage
+                  Dosage *
                 </label>
                 <input
                   type="text"
                   value={formData.dosage}
                   onChange={(e) => handleInputChange('dosage', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., 500mg, 10ml, 250mg/5ml"
                 />
               </div>
@@ -211,12 +212,13 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
               {/* Medicine Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Medicine Type
+                  Medicine Type *
                 </label>
                 <select
                   value={formData.medicineType}
                   onChange={(e) => handleInputChange('medicineType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select Type</option>
                   <option value="Tablet">Tablet</option>
@@ -232,21 +234,6 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                 </select>
               </div>
 
-              {/* Manufacturer */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer *
-                </label>
-                <input
-                  type="text"
-                  value={formData.manufacturer}
-                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., GSK, Cipla, Sun Pharma"
-                />
-              </div>
-
               {/* Schedule Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -255,7 +242,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                 <select
                   value={formData.scheduleType}
                   onChange={(e) => handleInputChange('scheduleType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="GENERAL">General</option>
                   <option value="H">Schedule H</option>
@@ -274,7 +261,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.hsn}
                   onChange={(e) => handleInputChange('hsn', e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="e.g., 30049099"
                 />
               </div>
@@ -287,7 +274,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                 <select
                   value={formData.gst}
                   onChange={(e) => handleInputChange('gst', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value={5}>5%</option>
                   <option value={12}>12%</option>
@@ -305,16 +292,17 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
               <textarea
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Additional information about the medicine..."
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Additional information about the medicine, usage instructions, side effects, etc."
               />
             </div>
           </div>
 
-          {/* Initial Stock Information */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Initial Stock Information</h3>
+          {/* Initial Stock Information Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Initial Stock Information</h2>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Batch Number */}
               <div>
@@ -325,8 +313,25 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   type="text"
                   value={formData.initialBatchNumber}
                   onChange={(e) => handleInputChange('initialBatchNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Auto-generated if empty"
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price (₹) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.initialSellingPrice}
+                  onChange={(e) => handleInputChange('initialSellingPrice', parseFloat(e.target.value) || 0)}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Selling price per unit"
                 />
               </div>
 
@@ -342,7 +347,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.initialMrp}
                   onChange={(e) => handleInputChange('initialMrp', parseFloat(e.target.value) || 0)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Maximum Retail Price"
                 />
               </div>
@@ -359,25 +364,8 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.initialPurchasePrice}
                   onChange={(e) => handleInputChange('initialPurchasePrice', parseFloat(e.target.value) || 0)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Cost price from supplier"
-                />
-              </div>
-
-              {/* Selling Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selling Price (₹) *
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.initialSellingPrice}
-                  onChange={(e) => handleInputChange('initialSellingPrice', parseFloat(e.target.value) || 0)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Price to customers"
                 />
               </div>
 
@@ -392,7 +380,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.initialStockQuantity}
                   onChange={(e) => handleInputChange('initialStockQuantity', parseInt(e.target.value) || 0)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Initial stock quantity"
                 />
               </div>
@@ -407,7 +395,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   value={formData.initialExpiryDate}
                   onChange={(e) => handleInputChange('initialExpiryDate', e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -421,7 +409,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   min="0"
                   value={formData.initialMinStock}
                   onChange={(e) => handleInputChange('initialMinStock', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Alert when stock falls below this"
                 />
               </div>
@@ -436,7 +424,7 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
                   min="0"
                   value={formData.initialMaxStock}
                   onChange={(e) => handleInputChange('initialMaxStock', parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Maximum stock to maintain"
                 />
               </div>
@@ -444,26 +432,28 @@ export const AddMedicineModal: React.FC<AddMedicineModalProps> = ({
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span>{loading ? 'Adding...' : 'Add Medicine'}</span>
-            </button>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-8 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-medium"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <Save className="w-5 h-5" />
+                )}
+                <span>{loading ? 'Adding Medicine...' : 'Add Medicine'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
