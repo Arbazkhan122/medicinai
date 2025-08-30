@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Medicine, Batch, Sale, ScheduleH1Entry, AuditLog, User } from '../types';
+import { Medicine, Batch, Sale, ScheduleH1Entry, AuditLog } from '../types';
 
 export class PharmacyDatabase extends Dexie {
   medicines!: Table<Medicine>;
@@ -7,18 +7,16 @@ export class PharmacyDatabase extends Dexie {
   sales!: Table<Sale>;
   scheduleH1Entries!: Table<ScheduleH1Entry>;
   auditLogs!: Table<AuditLog>;
-  users!: Table<User>;
 
   constructor() {
     super('PharmacyDB');
     
     this.version(1).stores({
-      medicines: 'id, name, brandName, manufacturer, scheduleType, hsn',
+      medicines: 'id, name, brandName, manufacturer, scheduleType, hsn, medicineType',
       batches: 'id, medicineId, batchNumber, expiryDate, currentStock, minStock',
       sales: 'id, invoiceNumber, customerName, customerPhone, saleDate, pharmacistId',
       scheduleH1Entries: 'id, medicineId, customerName, dispensedDate',
-      auditLogs: 'id, userId, action, entityType, timestamp',
-      users: 'id, email, role, name'
+      auditLogs: 'id, userId, action, entityType, timestamp'
     });
   }
 }
@@ -37,10 +35,13 @@ export const initializeDatabase = async () => {
         name: 'Paracetamol 500mg',
         genericName: 'Paracetamol',
         brandName: 'Crocin',
+        dosage: '500mg',
+        medicineType: 'Tablet',
         manufacturer: 'GSK',
         scheduleType: 'GENERAL',
         hsn: '30049099',
         gst: 12,
+        description: 'Pain relief and fever reducer',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -49,10 +50,13 @@ export const initializeDatabase = async () => {
         name: 'Alprazolam 0.5mg',
         genericName: 'Alprazolam',
         brandName: 'Alprax',
+        dosage: '0.5mg',
+        medicineType: 'Tablet',
         manufacturer: 'Torrent',
         scheduleType: 'H1',
         hsn: '30049099',
         gst: 12,
+        description: 'Anti-anxiety medication',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -61,10 +65,13 @@ export const initializeDatabase = async () => {
         name: 'Amoxicillin 500mg',
         genericName: 'Amoxicillin',
         brandName: 'Amoxil',
+        dosage: '500mg',
+        medicineType: 'Capsule',
         manufacturer: 'Cipla',
         scheduleType: 'H',
         hsn: '30049099',
         gst: 12,
+        description: 'Antibiotic for bacterial infections',
         createdAt: new Date(),
         updatedAt: new Date()
       }

@@ -3,10 +3,13 @@ export interface Medicine {
   name: string;
   genericName?: string;
   brandName: string;
+  dosage?: string;
+  medicineType?: string;
   manufacturer: string;
   scheduleType: 'H' | 'H1' | 'X' | 'GENERAL';
   hsn: string;
   gst: number;
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }
