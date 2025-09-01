@@ -17,7 +17,7 @@ interface CartItem {
 }
 
 export const SalesModule: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Medicine[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
@@ -31,20 +31,20 @@ export const SalesModule: React.FC = () => {
   const { addNotification } = usePharmacyStore();
 
   useEffect(() => {
-    if (searchQuery.length > 2) {
+    if (localSearchQuery.length > 2) {
       searchMedicines();
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [localSearchQuery]);
 
   const searchMedicines = async () => {
     try {
       const results = await db.medicines
         .filter(medicine => 
-          medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          medicine.brandName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          medicine.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())
+          medicine.name.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
+          medicine.brandName.toLowerCase().includes(localSearchQuery.toLowerCase()) ||
+          medicine.manufacturer.toLowerCase().includes(localSearchQuery.toLowerCase())
         )
         .limit(10)
         .toArray();
@@ -87,7 +87,7 @@ export const SalesModule: React.FC = () => {
       }
 
       addNotification('success', `Added ${medicine.brandName} to cart`);
-      setSearchQuery('');
+      setLocalSearchQuery('');
       setSearchResults([]);
     } catch (error) {
       addNotification('error', error instanceof Error ? error.message : 'Failed to add to cart');
@@ -239,8 +239,8 @@ export const SalesModule: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search medicines by name, brand, or manufacturer..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={localSearchQuery}
+                onChange={(e) => setLocalSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

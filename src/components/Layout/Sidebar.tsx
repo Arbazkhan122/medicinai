@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { sidebarOpen, setSidebarOpen } = usePharmacyStore();
+  const { sidebarOpen, setSidebarOpen, searchQuery } = usePharmacyStore();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -31,6 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
+  // Filter menu items based on search query
+  const filteredMenuItems = searchQuery.trim() === '' 
+    ? menuItems 
+    : menuItems.filter(item => 
+        item.label.toLowerCase().includes(searchQuery.toLowerCase())
+      );
   return (
     <>
       {/* Mobile overlay */}
@@ -65,7 +71,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
         {/* Navigation */}
         <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
+          {filteredMenuItems.length > 0 ? (
+            filteredMenuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`
+                    w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors
+                    ${isActive 
+                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    }
+                  `}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              );
+            })
+          ) : searchQuery.trim() !== '' ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">No matching sections found</p>
+              <p className="text-gray-400 text-xs mt-1">Try a different search term</p>
+            </div>
+          ) : (
+            menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             
@@ -88,7 +125,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                 <span className="font-medium">{item.label}</span>
               </button>
             );
-          })}
+            })
+          )}
         </nav>
 
         {/* Quick actions */}
