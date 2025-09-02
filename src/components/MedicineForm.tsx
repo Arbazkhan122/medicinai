@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useImperativeHandle, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, Package } from 'lucide-react';
+import { Save, Package, Pill } from 'lucide-react';
 
 const medicineSchema = z.object({
   name: z.string().min(1, 'Medicine name is required'),
@@ -36,12 +36,12 @@ interface MedicineFormProps {
   className?: string;
 }
 
-export const MedicineForm: React.FC<MedicineFormProps> = ({
+export const MedicineForm = forwardRef<any, MedicineFormProps>(({
   onSubmit,
   loading = false,
   initialData,
   className = ''
-}) => {
+}, ref) => {
   const {
     register,
     handleSubmit,
@@ -61,57 +61,31 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
     }
   });
 
-  // Auto-fill form based on extracted text (this would be enhanced with actual AI parsing)
-  const autoFillFromText = (extractedText: string) => {
-    // Simple pattern matching for demo - in real implementation, use AI/NLP
-    const patterns = {
-      name: /Medicine Name:\s*(.+)/i,
-      brandName: /Brand:\s*(.+)/i,
-      manufacturer: /Manufacturer:\s*(.+)/i,
-      batchNumber: /Batch No:\s*(.+)/i,
-      mrp: /MRP:\s*₹?(\d+\.?\d*)/i,
-      hsn: /HSN:\s*(\d+)/i,
-      expiryDate: /Expiry Date:\s*(\d{1,2}\/\d{4})/i
-    };
-
-    Object.entries(patterns).forEach(([field, pattern]) => {
-      const match = extractedText.match(pattern);
-      if (match) {
-        const value = match[1].trim();
-        switch (field) {
-          case 'name':
-            setValue('name', value);
-            break;
-          case 'brandName':
-            setValue('brandName', value);
-            break;
-          case 'manufacturer':
-            setValue('manufacturer', value);
-            break;
-          case 'batchNumber':
-            setValue('initialBatchNumber', value);
-            break;
-          case 'mrp':
-            setValue('initialMrp', parseFloat(value));
-            setValue('initialSellingPrice', parseFloat(value) * 0.9); // 10% discount from MRP
-            break;
-          case 'hsn':
-            setValue('hsn', value);
-            break;
-          case 'expiryDate':
-            // Convert MM/YYYY to YYYY-MM-DD format
-            const [month, year] = value.split('/');
-            const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
-            setValue('initialExpiryDate', `${year}-${month.padStart(2, '0')}-${lastDayOfMonth}`);
-            break;
-        }
-      }
-    });
+  // Auto-fill form with AI processed data
+  const autoFillFromAIData = (aiData: any) => {
+    if (aiData.name) setValue('name', aiData.name);
+    if (aiData.genericName) setValue('genericName', aiData.genericName);
+    if (aiData.brandName) setValue('brandName', aiData.brandName);
+    if (aiData.dosage) setValue('dosage', aiData.dosage);
+    if (aiData.medicineType) setValue('medicineType', aiData.medicineType);
+    if (aiData.manufacturer) setValue('manufacturer', aiData.manufacturer);
+    if (aiData.scheduleType) setValue('scheduleType', aiData.scheduleType);
+    if (aiData.hsn) setValue('hsn', aiData.hsn);
+    if (aiData.batchNumber) setValue('initialBatchNumber', aiData.batchNumber);
+    if (aiData.mrp) {
+      setValue('initialMrp', aiData.mrp);
+      // Auto-calculate selling price as 90% of MRP
+      setValue('initialSellingPrice', aiData.mrp * 0.9);
+      // Auto-calculate purchase price as 70% of MRP
+      setValue('initialPurchasePrice', aiData.mrp * 0.7);
+    }
+    if (aiData.expiryDate) setValue('initialExpiryDate', aiData.expiryDate);
   };
 
   // Expose auto-fill function to parent component
-  React.useImperativeHandle(React.useRef(), () => ({
-    autoFillFromText
+  useImperativeHandle(ref, () => ({
+    autoFillFromAIData,
+    reset
   }));
 
   const onFormSubmit = async (data: MedicineFormData) => {
@@ -129,7 +103,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
         {/* Medicine Information Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
-            <Package className="w-5 h-5 text-blue-600" />
+            <Pill className="w-5 h-5 text-blue-600" />
             <span>Medicine Information</span>
           </h2>
           
@@ -141,7 +115,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('name')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., Paracetamol 500mg"
               />
               {errors.name && (
@@ -156,7 +130,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('brandName')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., Crocin"
               />
               {errors.brandName && (
@@ -171,7 +145,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('genericName')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., Paracetamol"
               />
             </div>
@@ -183,7 +157,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('manufacturer')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., GSK, Cipla, Sun Pharma"
               />
               {errors.manufacturer && (
@@ -198,7 +172,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('dosage')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., 500mg, 10ml, 250mg/5ml"
               />
               {errors.dosage && (
@@ -213,7 +187,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <select
                 {...register('medicineType')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               >
                 <option value="">Select Type</option>
                 <option value="Tablet">Tablet</option>
@@ -239,7 +213,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <select
                 {...register('scheduleType')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               >
                 <option value="GENERAL">General</option>
                 <option value="H">Schedule H</option>
@@ -255,7 +229,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('hsn')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="e.g., 30049099"
               />
               {errors.hsn && (
@@ -270,7 +244,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <select
                 {...register('gst', { valueAsNumber: true })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               >
                 <option value={5}>5%</option>
                 <option value={12}>12%</option>
@@ -288,7 +262,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
             <textarea
               {...register('description')}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               placeholder="Additional information about the medicine, usage instructions, side effects, etc."
             />
           </div>
@@ -296,7 +270,10 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
 
         {/* Initial Stock Information Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Initial Stock Information</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
+            <Package className="w-5 h-5 text-green-600" />
+            <span>Initial Stock Information</span>
+          </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Batch Number */}
@@ -306,7 +283,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               </label>
               <input
                 {...register('initialBatchNumber')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Auto-generated if empty"
               />
             </div>
@@ -321,7 +298,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Maximum Retail Price"
               />
               {errors.initialMrp && (
@@ -339,7 +316,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Cost price from supplier"
               />
               {errors.initialPurchasePrice && (
@@ -357,7 +334,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 type="number"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Selling price per unit"
               />
               {errors.initialSellingPrice && (
@@ -374,7 +351,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 {...register('initialStockQuantity', { valueAsNumber: true })}
                 type="number"
                 min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Initial stock quantity"
               />
               {errors.initialStockQuantity && (
@@ -390,7 +367,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
               <input
                 {...register('initialExpiryDate')}
                 type="date"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
               {errors.initialExpiryDate && (
                 <p className="mt-1 text-sm text-red-600">{errors.initialExpiryDate.message}</p>
@@ -406,7 +383,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 {...register('initialMinStock', { valueAsNumber: true })}
                 type="number"
                 min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Alert when stock falls below this"
               />
             </div>
@@ -420,7 +397,7 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
                 {...register('initialMaxStock', { valueAsNumber: true })}
                 type="number"
                 min="0"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                 placeholder="Maximum stock to maintain"
               />
             </div>
@@ -454,4 +431,6 @@ export const MedicineForm: React.FC<MedicineFormProps> = ({
       </form>
     </div>
   );
-};
+});
+
+MedicineForm.displayName = 'MedicineForm';

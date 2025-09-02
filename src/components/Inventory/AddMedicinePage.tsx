@@ -5,7 +5,6 @@ import { Medicine, Batch } from '../../types';
 import { usePharmacyStore } from '../../store';
 import { ImageUpload } from '../ImageUpload';
 import { MedicineForm, MedicineFormData } from '../MedicineForm';
-import { AIProcessor } from '../AIProcessor';
 
 interface AddMedicinePageProps {
   onBack: () => void;
@@ -18,7 +17,6 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
 }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string>('');
-  const [aiProcessedData, setAiProcessedData] = useState<Partial<MedicineFormData> | null>(null);
   const [loading, setLoading] = useState(false);
   const { addNotification } = usePharmacyStore();
   const formRef = useRef<any>(null);
@@ -31,11 +29,11 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
     setExtractedText(text);
   };
 
-  const handleAIProcessingComplete = (processedData: any) => {
-    setAiProcessedData(processedData);
+  const handleAIDataExtracted = (aiData: any) => {
     // Auto-fill the form with AI processed data
-    if (formRef.current?.autoFillFromText) {
-      formRef.current.autoFillFromText(extractedText);
+    if (formRef.current?.autoFillFromAIData) {
+      formRef.current.autoFillFromAIData(aiData);
+      addNotification('success', `AI extracted medicine data with ${aiData.confidence}% confidence`);
     }
   };
 
@@ -111,7 +109,7 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">AI-Powered Medicine Entry</h1>
-                  <p className="text-sm text-gray-600">Upload, extract, and auto-fill medicine information</p>
+                  <p className="text-sm text-gray-600">Upload medicine images and let Google Flash 2.0 auto-fill the form</p>
                 </div>
               </div>
             </div>
@@ -122,19 +120,13 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Image Upload & AI Processing */}
+          {/* Left Column - Image Upload */}
           <div className="lg:col-span-1 space-y-6">
             <ImageUpload
               onImageSelected={handleImageSelected}
               onTextExtracted={handleTextExtracted}
+              onAIDataExtracted={handleAIDataExtracted}
             />
-            
-            {extractedText && (
-              <AIProcessor
-                extractedText={extractedText}
-                onProcessingComplete={handleAIProcessingComplete}
-              />
-            )}
           </div>
 
           {/* Right Column - Medicine Form */}
@@ -143,7 +135,6 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
               ref={formRef}
               onSubmit={handleFormSubmit}
               loading={loading}
-              initialData={aiProcessedData || undefined}
             />
           </div>
         </div>

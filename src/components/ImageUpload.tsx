@@ -1,22 +1,26 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon, FileText } from 'lucide-react';
+import { googleAIService } from '../services/googleAI';
 
 interface ImageUploadProps {
   onImageSelected: (file: File) => void;
   onTextExtracted?: (text: string) => void;
+  onAIDataExtracted?: (data: any) => void;
   className?: string;
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   onImageSelected,
   onTextExtracted,
+  onAIDataExtracted,
   className = ''
 }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string>('');
   const [processing, setProcessing] = useState(false);
+  const [aiProcessing, setAiProcessing] = useState(false);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -31,23 +35,37 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       };
       reader.readAsDataURL(file);
 
-      // Simulate OCR text extraction (in real implementation, this would call an OCR API)
-      setProcessing(true);
-      setTimeout(() => {
-        const mockExtractedText = `Medicine Name: Paracetamol 500mg
-Brand: Crocin
-Manufacturer: GSK Pharmaceuticals
-Batch No: PCM001
-Expiry Date: 12/2025
-MRP: ₹25.00
-HSN: 30049099`;
-        
-        setExtractedText(mockExtractedText);
-        onTextExtracted?.(mockExtractedText);
-        setProcessing(false);
-      }, 2000);
+      // Process with Google AI
+      await processWithGoogleAI(file);
     }
-  }, [onImageSelected, onTextExtracted]);
+  }, [onImageSelected, onTextExtracted, onAIDataExtracted]);
+
+  const processWithGoogleAI = async (file: File) => {
+    setAiProcessing(true);
+    try {
+      const aiData = await googleAIService.extractMedicineInfo(file);
+      
+      // Create extracted text for display
+      const displayText = `Medicine Name: ${aiData.name || 'Not detected'}
+Brand: ${aiData.brandName || 'Not detected'}
+Manufacturer: ${aiData.manufacturer || 'Not detected'}
+Batch No: ${aiData.batchNumber || 'Not detected'}
+Expiry Date: ${aiData.expiryDate || 'Not detected'}
+MRP: ₹${aiData.mrp || 'Not detected'}
+HSN: ${aiData.hsn || 'Not detected'}
+Schedule: ${aiData.scheduleType || 'GENERAL'}`;
+
+      setExtractedText(displayText);
+      onTextExtracted?.(displayText);
+      onAIDataExtracted?.(aiData);
+    } catch (error) {
+      console.error('AI processing error:', error);
+      setExtractedText('Error: Failed to process image with AI. Please check your API key configuration.');
+      onTextExtracted?.('Error processing image');
+    } finally {
+      setAiProcessing(false);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -123,18 +141,18 @@ HSN: 30049099`;
         )}
       </div>
 
-      {/* Extracted Text */}
-      {(processing || extractedText) && (
+      {/* AI Processing Results */}
+      {(aiProcessing || extractedText) && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
             <FileText className="w-5 h-5 text-green-600" />
-            <span>Extracted Information</span>
+            <span>AI Extracted Information</span>
           </h3>
           
-          {processing ? (
+          {aiProcessing ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Processing image with AI...</span>
+              <span className="ml-3 text-gray-700 mb-2">Google Flash 2.0 is analyzing the medicine information...</span>
             </div>
           ) : (
             <div className="bg-gray-50 rounded-lg p-4">
@@ -144,7 +162,7 @@ HSN: 30049099`;
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <strong>AI Suggestion:</strong> The form below has been auto-filled based on the extracted information. 
-                  Please review and modify as needed before saving.
+                  <p>The form below has been auto-filled using Google Flash 2.0. Please review and modify as needed before saving.</p>
                 </p>
               </div>
             </div>
