@@ -5,27 +5,17 @@ class GoogleAIService {
   private model: any = null;
 
   constructor() {
-    this.initializeAI();
-  }
-
-  private initializeAI() {
+    // Initialize immediately with just the API key
     const apiKey = import.meta.env.VITE_GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      console.warn('Google AI API key not found. Please add VITE_GOOGLE_AI_API_KEY to your .env file');
-      return;
-    }
-    
-    try {
+    if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-    } catch (error) {
-      console.error('Failed to initialize Google AI:', error);
     }
   }
 
   async extractMedicineInfo(imageFile: File): Promise<any> {
     if (!this.model) {
-      throw new Error('Google AI not initialized. Please check your API key.');
+      throw new Error('Google AI API key not found. Please add VITE_GOOGLE_AI_API_KEY to your .env file.');
     }
 
     try {

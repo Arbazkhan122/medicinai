@@ -219,9 +219,14 @@ Confidence: ${aiData.confidence || 0}%`;
               </p>
               <div className="mt-3 p-3 bg-yellow-100 rounded-md">
                 <ol className="text-yellow-800 text-sm space-y-2 list-decimal list-inside">
-                  <li>Get your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-900">Google AI Studio</a></li>
-                  <li>Create a <code className="bg-yellow-200 px-1 rounded">.env</code> file in your project root</li>
-                  <li>Add: <code className="bg-yellow-200 px-1 rounded">VITE_GOOGLE_AI_API_KEY=your_api_key_here</code></li>
+                  <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-900">Google AI Studio</a></li>
+                  <li>Click "Create API Key" (free, no client ID needed)</li>
+                  <li>Copy the generated key</li>
+                  <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a></li>
+                  <li>Click "Create API Key" (no sign-up required)</li>
+                  <li>Copy the generated API key</li>
+                  <li>Create a <code className="bg-red-200 px-1 rounded">.env</code> file in your project root</li>
+                  <li>Add: <code className="bg-red-200 px-1 rounded">VITE_GOOGLE_AI_API_KEY=your_api_key_here</code></li>
                   <li>Restart the development server</li>
                 </ol>
               </div>
