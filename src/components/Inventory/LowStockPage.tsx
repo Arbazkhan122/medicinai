@@ -3,20 +3,16 @@ import {
   AlertTriangle, 
   Plus, 
   Package, 
-  Edit3, 
   RefreshCw,
   Search,
-  Calendar,
-  DollarSign,
   TrendingDown,
-  ArrowLeft
+  ArrowRight
 } from 'lucide-react';
 import { db } from '../../database';
 import { Medicine, Batch } from '../../types';
 import { usePharmacyStore } from '../../store';
 import { format } from 'date-fns';
 import { AddMedicinePage } from './AddMedicinePage';
-import { RestockModal } from './RestockModal';
 
 interface LowStockItem {
   medicine: Medicine;
@@ -29,8 +25,8 @@ export const LowStockPage: React.FC = () => {
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddMedicine, setShowAddMedicine] = useState(false);
-  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
-  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [showRestockPage, setShowRestockPage] = useState(false);
+  const [restockMedicine, setRestockMedicine] = useState<Medicine | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { addNotification } = usePharmacyStore();
 
@@ -85,10 +81,15 @@ export const LowStockPage: React.FC = () => {
     }
   };
 
-  const handleRestockComplete = () => {
+  const handleRestockClick = (medicine: Medicine) => {
+    setRestockMedicine(medicine);
+    setShowRestockPage(true);
+  };
+
+  const handleBackFromRestock = () => {
+    setShowRestockPage(false);
+    setRestockMedicine(null);
     loadLowStockItems();
-    setShowRestockModal(false);
-    setSelectedMedicine(null);
   };
 
   const handleMedicineAdded = () => {
@@ -109,6 +110,10 @@ export const LowStockPage: React.FC = () => {
         onMedicineAdded={handleMedicineAdded}
       />
     );
+  }
+
+  if (showRestockPage && restockMedicine) {
+    return <RestockPage medicine={restockMedicine} onBack={handleBackFromRestock} />;
   }
 
   const getStockStatus = (item: LowStockItem) => {
@@ -279,24 +284,12 @@ export const LowStockPage: React.FC = () => {
                     <div className="flex flex-col space-y-2 ml-6">
                       <button
                         onClick={() => {
-                          setSelectedMedicine(item.medicine);
-                          setShowRestockModal(true);
+                          handleRestockClick(item.medicine);
                         }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
                       >
-                        <Package className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4" />
                         Restock
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          // TODO: Implement edit medicine functionality
-                          addNotification('info', 'Edit medicine functionality coming soon');
-                        }}
-                        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                        Edit
                       </button>
                     </div>
                   </div>
@@ -305,18 +298,6 @@ export const LowStockPage: React.FC = () => {
             })}
           </div>
         </div>
-      )}
-
-      {/* Restock Modal */}
-      {showRestockModal && selectedMedicine && (
-        <RestockModal
-          medicine={selectedMedicine}
-          onClose={() => {
-            setShowRestockModal(false);
-            setSelectedMedicine(null);
-          }}
-          onRestockComplete={handleRestockComplete}
-        />
       )}
     </div>
   );
