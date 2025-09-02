@@ -166,6 +166,153 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             </div>
 
             {/* Brand Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Brand Name
+              </label>
+              <input
+                {...register('brandName')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="e.g., Crocin"
+              />
+            </div>
+
+            {/* Generic Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Generic Name
+              </label>
+              <input
+                {...register('genericName')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="e.g., Paracetamol"
+              />
+            </div>
+
+            {/* Dosage */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dosage
+              </label>
+              <input
+                {...register('dosage')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="e.g., 500mg"
+              />
+            </div>
+
+            {/* Medicine Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medicine Type *
+              </label>
+              <select
+                {...register('medicineType')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              >
+                <option value="">Select type</option>
+                <option value="Tablet">Tablet</option>
+                <option value="Capsule">Capsule</option>
+                <option value="Syrup">Syrup</option>
+                <option value="Injection">Injection</option>
+                <option value="Cream">Cream</option>
+                <option value="Ointment">Ointment</option>
+                <option value="Drops">Drops</option>
+                <option value="Powder">Powder</option>
+                <option value="Other">Other</option>
+              </select>
+              {errors.medicineType && (
+                <p className="mt-1 text-sm text-red-600">{errors.medicineType.message}</p>
+              )}
+            </div>
+
+            {/* Manufacturer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Manufacturer
+              </label>
+              <input
+                {...register('manufacturer')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="e.g., GSK Pharmaceuticals"
+              />
+            </div>
+
+            {/* Schedule Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Schedule Type
+              </label>
+              <select
+                {...register('scheduleType')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              >
+                <option value="GENERAL">General</option>
+                <option value="H">Schedule H</option>
+                <option value="H1">Schedule H1</option>
+                <option value="X">Schedule X</option>
+              </select>
+            </div>
+
+            {/* HSN Code */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                HSN Code
+              </label>
+              <input
+                {...register('hsn')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="e.g., 30049099"
+              />
+            </div>
+
+            {/* GST Rate */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                GST Rate (%)
+              </label>
+              <input
+                {...register('gst', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="12"
+              />
+              {errors.gst && (
+                <p className="mt-1 text-sm text-red-600">{errors.gst.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              {googleAIService.isConfigured() && (
+                <button
+                  type="button"
+                  onClick={generateDescription}
+                  disabled={generatingDescription}
+                  className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{generatingDescription ? 'Generating...' : 'Generate with AI'}</span>
+                </button>
+              )}
+            </div>
+            <textarea
+              {...register('description')}
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="Medicine description, uses, and other details..."
+            />
+          </div>
+        </div>
+
         {/* Initial Stock Information Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
