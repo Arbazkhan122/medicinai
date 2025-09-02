@@ -1,0 +1,457 @@
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Save, Package } from 'lucide-react';
+
+const medicineSchema = z.object({
+  name: z.string().min(1, 'Medicine name is required'),
+  genericName: z.string().optional(),
+  brandName: z.string().min(1, 'Brand name is required'),
+  dosage: z.string().min(1, 'Dosage is required'),
+  medicineType: z.string().min(1, 'Medicine type is required'),
+  manufacturer: z.string().min(1, 'Manufacturer is required'),
+  scheduleType: z.enum(['H', 'H1', 'X', 'GENERAL']),
+  hsn: z.string().min(1, 'HSN code is required'),
+  gst: z.number().min(0).max(100),
+  description: z.string().optional(),
+  // Initial batch data
+  initialBatchNumber: z.string().optional(),
+  initialMrp: z.number().min(0, 'MRP must be positive'),
+  initialPurchasePrice: z.number().min(0, 'Purchase price must be positive'),
+  initialSellingPrice: z.number().min(0, 'Selling price must be positive'),
+  initialStockQuantity: z.number().min(0, 'Stock quantity must be positive'),
+  initialMinStock: z.number().min(0, 'Minimum stock must be positive'),
+  initialMaxStock: z.number().min(0, 'Maximum stock must be positive'),
+  initialExpiryDate: z.string().min(1, 'Expiry date is required'),
+  supplierId: z.string().default('DEFAULT')
+});
+
+export type MedicineFormData = z.infer<typeof medicineSchema>;
+
+interface MedicineFormProps {
+  onSubmit: (data: MedicineFormData) => Promise<void>;
+  loading?: boolean;
+  initialData?: Partial<MedicineFormData>;
+  className?: string;
+}
+
+export const MedicineForm: React.FC<MedicineFormProps> = ({
+  onSubmit,
+  loading = false,
+  initialData,
+  className = ''
+}) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch
+  } = useForm<MedicineFormData>({
+    resolver: zodResolver(medicineSchema),
+    defaultValues: {
+      scheduleType: 'GENERAL',
+      gst: 12,
+      supplierId: 'DEFAULT',
+      initialMinStock: 10,
+      initialMaxStock: 100,
+      ...initialData
+    }
+  });
+
+  // Auto-fill form based on extracted text (this would be enhanced with actual AI parsing)
+  const autoFillFromText = (extractedText: string) => {
+    // Simple pattern matching for demo - in real implementation, use AI/NLP
+    const patterns = {
+      name: /Medicine Name:\s*(.+)/i,
+      brandName: /Brand:\s*(.+)/i,
+      manufacturer: /Manufacturer:\s*(.+)/i,
+      batchNumber: /Batch No:\s*(.+)/i,
+      mrp: /MRP:\s*₹?(\d+\.?\d*)/i,
+      hsn: /HSN:\s*(\d+)/i,
+      expiryDate: /Expiry Date:\s*(\d{1,2}\/\d{4})/i
+    };
+
+    Object.entries(patterns).forEach(([field, pattern]) => {
+      const match = extractedText.match(pattern);
+      if (match) {
+        const value = match[1].trim();
+        switch (field) {
+          case 'name':
+            setValue('name', value);
+            break;
+          case 'brandName':
+            setValue('brandName', value);
+            break;
+          case 'manufacturer':
+            setValue('manufacturer', value);
+            break;
+          case 'batchNumber':
+            setValue('initialBatchNumber', value);
+            break;
+          case 'mrp':
+            setValue('initialMrp', parseFloat(value));
+            setValue('initialSellingPrice', parseFloat(value) * 0.9); // 10% discount from MRP
+            break;
+          case 'hsn':
+            setValue('hsn', value);
+            break;
+          case 'expiryDate':
+            // Convert MM/YYYY to YYYY-MM-DD format
+            const [month, year] = value.split('/');
+            const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+            setValue('initialExpiryDate', `${year}-${month.padStart(2, '0')}-${lastDayOfMonth}`);
+            break;
+        }
+      }
+    });
+  };
+
+  // Expose auto-fill function to parent component
+  React.useImperativeHandle(React.useRef(), () => ({
+    autoFillFromText
+  }));
+
+  const onFormSubmit = async (data: MedicineFormData) => {
+    try {
+      await onSubmit(data);
+      reset();
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
+  };
+
+  return (
+    <div className={`space-y-8 ${className}`}>
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
+        {/* Medicine Information Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center space-x-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            <span>Medicine Information</span>
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Medicine Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medicine Name *
+              </label>
+              <input
+                {...register('name')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Paracetamol 500mg"
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              )}
+            </div>
+
+            {/* Brand Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Brand Name *
+              </label>
+              <input
+                {...register('brandName')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Crocin"
+              />
+              {errors.brandName && (
+                <p className="mt-1 text-sm text-red-600">{errors.brandName.message}</p>
+              )}
+            </div>
+
+            {/* Generic Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Generic Name
+              </label>
+              <input
+                {...register('genericName')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., Paracetamol"
+              />
+            </div>
+
+            {/* Manufacturer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Manufacturer *
+              </label>
+              <input
+                {...register('manufacturer')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., GSK, Cipla, Sun Pharma"
+              />
+              {errors.manufacturer && (
+                <p className="mt-1 text-sm text-red-600">{errors.manufacturer.message}</p>
+              )}
+            </div>
+
+            {/* Dosage */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Dosage *
+              </label>
+              <input
+                {...register('dosage')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., 500mg, 10ml, 250mg/5ml"
+              />
+              {errors.dosage && (
+                <p className="mt-1 text-sm text-red-600">{errors.dosage.message}</p>
+              )}
+            </div>
+
+            {/* Medicine Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medicine Type *
+              </label>
+              <select
+                {...register('medicineType')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select Type</option>
+                <option value="Tablet">Tablet</option>
+                <option value="Capsule">Capsule</option>
+                <option value="Syrup">Syrup</option>
+                <option value="Injection">Injection</option>
+                <option value="Cream">Cream</option>
+                <option value="Ointment">Ointment</option>
+                <option value="Drops">Drops</option>
+                <option value="Powder">Powder</option>
+                <option value="Inhaler">Inhaler</option>
+                <option value="Spray">Spray</option>
+              </select>
+              {errors.medicineType && (
+                <p className="mt-1 text-sm text-red-600">{errors.medicineType.message}</p>
+              )}
+            </div>
+
+            {/* Schedule Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Schedule Type *
+              </label>
+              <select
+                {...register('scheduleType')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="GENERAL">General</option>
+                <option value="H">Schedule H</option>
+                <option value="H1">Schedule H1</option>
+                <option value="X">Schedule X</option>
+              </select>
+            </div>
+
+            {/* HSN Code */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                HSN Code *
+              </label>
+              <input
+                {...register('hsn')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., 30049099"
+              />
+              {errors.hsn && (
+                <p className="mt-1 text-sm text-red-600">{errors.hsn.message}</p>
+              )}
+            </div>
+
+            {/* GST Percentage */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                GST Percentage *
+              </label>
+              <select
+                {...register('gst', { valueAsNumber: true })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value={5}>5%</option>
+                <option value={12}>12%</option>
+                <option value={18}>18%</option>
+                <option value={28}>28%</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              {...register('description')}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Additional information about the medicine, usage instructions, side effects, etc."
+            />
+          </div>
+        </div>
+
+        {/* Initial Stock Information Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Initial Stock Information</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Batch Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Batch Number
+              </label>
+              <input
+                {...register('initialBatchNumber')}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Auto-generated if empty"
+              />
+            </div>
+
+            {/* MRP */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                MRP (₹) *
+              </label>
+              <input
+                {...register('initialMrp', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Maximum Retail Price"
+              />
+              {errors.initialMrp && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialMrp.message}</p>
+              )}
+            </div>
+
+            {/* Purchase Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Purchase Price (₹) *
+              </label>
+              <input
+                {...register('initialPurchasePrice', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Cost price from supplier"
+              />
+              {errors.initialPurchasePrice && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialPurchasePrice.message}</p>
+              )}
+            </div>
+
+            {/* Selling Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Selling Price (₹) *
+              </label>
+              <input
+                {...register('initialSellingPrice', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Selling price per unit"
+              />
+              {errors.initialSellingPrice && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialSellingPrice.message}</p>
+              )}
+            </div>
+
+            {/* Stock Quantity */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stock Quantity *
+              </label>
+              <input
+                {...register('initialStockQuantity', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Initial stock quantity"
+              />
+              {errors.initialStockQuantity && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialStockQuantity.message}</p>
+              )}
+            </div>
+
+            {/* Expiry Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Expiry Date *
+              </label>
+              <input
+                {...register('initialExpiryDate')}
+                type="date"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {errors.initialExpiryDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.initialExpiryDate.message}</p>
+              )}
+            </div>
+
+            {/* Min Stock */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Minimum Stock Level
+              </label>
+              <input
+                {...register('initialMinStock', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Alert when stock falls below this"
+              />
+            </div>
+
+            {/* Max Stock */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Maximum Stock Level
+              </label>
+              <input
+                {...register('initialMaxStock', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Maximum stock to maintain"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              onClick={() => reset()}
+              className="px-8 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+            >
+              Reset Form
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-medium"
+            >
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              <span>{loading ? 'Adding Medicine...' : 'Add Medicine'}</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};
