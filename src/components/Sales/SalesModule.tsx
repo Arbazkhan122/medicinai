@@ -46,7 +46,7 @@ export const SalesModule: React.FC = () => {
     }
   };
 
-  const addToCart = async (medicine: Medicine, requestedQuantity: number) => {
+  const handleAddToCart = async (medicine: Medicine, requestedQuantity: number) => {
     try {
       const selectedBatches = await FEFOService.selectBatchesForSale(medicine.id, requestedQuantity);
       
@@ -229,7 +229,7 @@ export const SalesModule: React.FC = () => {
                           onClick={() => {
                             const qtyInput = document.getElementById(`qty-${medicine.id}`) as HTMLInputElement;
                             const quantity = parseInt(qtyInput.value) || 1;
-                            addToCart(medicine, quantity);
+                            handleAddToCart(medicine, quantity);
                           }}
                           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                         >
