@@ -72,30 +72,33 @@ export const HeaderSearch: React.FC = () => {
     }
   };
 
-  const getMedicineStock = async (medicineId: string): Promise<number> => {
+  const getMedicineStockAndPrice = async (medicineId: string): Promise<{stock: number, price: number}> => {
     const batches = await db.batches
       .where('medicineId')
       .equals(medicineId)
       .filter(batch => batch.currentStock > 0 && batch.expiryDate > new Date())
       .toArray();
     
-    return batches.reduce((total, batch) => total + batch.currentStock, 0);
+    const stock = batches.reduce((total, batch) => total + batch.currentStock, 0);
+    const price = batches.length > 0 ? batches[0].sellingPrice : 0;
+    
+    return { stock, price };
   };
 
-  const [stockInfo, setStockInfo] = useState<Record<string, number>>({});
+  const [stockInfo, setStockInfo] = useState<Record<string, {stock: number, price: number}>>({});
 
   useEffect(() => {
     if (searchResults.length > 0) {
       Promise.all(
         searchResults.map(async (medicine) => {
-          const stock = await getMedicineStock(medicine.id);
-          return { id: medicine.id, stock };
+          const stockAndPrice = await getMedicineStockAndPrice(medicine.id);
+          return { id: medicine.id, ...stockAndPrice };
         })
       ).then((results) => {
-        const stockMap = results.reduce((acc, { id, stock }) => {
-          acc[id] = stock;
+        const stockMap = results.reduce((acc, { id, stock, price }) => {
+          acc[id] = { stock, price };
           return acc;
-        }, {} as Record<string, number>);
+        }, {} as Record<string, {stock: number, price: number}>);
         setStockInfo(stockMap);
       });
     }
@@ -150,6 +153,9 @@ export const HeaderSearch: React.FC = () => {
                           <span className="text-xs text-gray-500">
                             {medicine.manufacturer}
                           </span>
+                          <span className="text-xs text-blue-600 font-medium">
+                            ₹{stockInfo[medicine.id]?.price?.toFixed(2) || 'N/A'}
+                          </span>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             medicine.scheduleType === 'H1' 
                               ? 'bg-red-100 text-red-700' 
@@ -160,9 +166,9 @@ export const HeaderSearch: React.FC = () => {
                             {medicine.scheduleType}
                           </span>
                           <span className={`text-xs font-medium ${
-                            hasStock ? 'text-green-600' : 'text-red-600'
+                            stockInfo[medicine.id]?.stock > 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            Stock: {stock}
+                            Stock: {stockInfo[medicine.id]?.stock || 0}
                           </span>
                         </div>
                       </div>
@@ -173,11 +179,11 @@ export const HeaderSearch: React.FC = () => {
                     <input
                       type="number"
                       min="1"
-                      max={stock}
+                      max={stockInfo[medicine.id]?.stock || 0}
                       defaultValue="1"
                       className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                       id={`header-qty-${medicine.id}`}
-                      disabled={!hasStock}
+                      disabled={!stockInfo[medicine.id]?.stock}
                     />
                     <button
                       onClick={() => {
@@ -185,7 +191,7 @@ export const HeaderSearch: React.FC = () => {
                         const quantity = parseInt(qtyInput.value) || 1;
                         addMedicineToCart(medicine, quantity);
                       }}
-                      disabled={!hasStock}
+                      disabled={!stockInfo[medicine.id]?.stock}
                       className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-1"
                     >
                       <Plus className="w-3 h-3" />
