@@ -7,23 +7,23 @@ import { Save, Package, Pill } from 'lucide-react';
 const medicineSchema = z.object({
   name: z.string().min(1, 'Medicine name is required'),
   genericName: z.string().optional(),
-  brandName: z.string().min(1, 'Brand name is required'),
-  dosage: z.string().min(1, 'Dosage is required'),
+  brandName: z.string().optional(),
+  dosage: z.string().optional(),
   medicineType: z.string().min(1, 'Medicine type is required'),
-  manufacturer: z.string().min(1, 'Manufacturer is required'),
+  manufacturer: z.string().optional(),
   scheduleType: z.enum(['H', 'H1', 'X', 'GENERAL']),
-  hsn: z.string().min(1, 'HSN code is required'),
+  hsn: z.string().optional(),
   gst: z.number().min(0).max(100),
   description: z.string().optional(),
   // Initial batch data
   initialBatchNumber: z.string().optional(),
-  initialMrp: z.number().min(0, 'MRP must be positive'),
-  initialPurchasePrice: z.number().min(0, 'Purchase price must be positive'),
+  initialMrp: z.number().min(0).optional(),
+  initialPurchasePrice: z.number().min(0).optional(),
   initialSellingPrice: z.number().min(0, 'Selling price must be positive'),
-  initialStockQuantity: z.number().min(0, 'Stock quantity must be positive'),
-  initialMinStock: z.number().min(0, 'Minimum stock must be positive'),
-  initialMaxStock: z.number().min(0, 'Maximum stock must be positive'),
-  initialExpiryDate: z.string().min(1, 'Expiry date is required'),
+  initialStockQuantity: z.number().min(0).optional(),
+  initialMinStock: z.number().min(0).optional(),
+  initialMaxStock: z.number().min(0).optional(),
+  initialExpiryDate: z.string().optional(),
   supplierId: z.string().default('DEFAULT')
 });
 
@@ -126,7 +126,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Brand Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Brand Name *
+                Brand Name
               </label>
               <input
                 {...register('brandName')}
@@ -153,7 +153,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Manufacturer */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Manufacturer *
+                Manufacturer
               </label>
               <input
                 {...register('manufacturer')}
@@ -168,7 +168,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Dosage */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dosage *
+                Dosage
               </label>
               <input
                 {...register('dosage')}
@@ -209,7 +209,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Schedule Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Schedule Type *
+                Schedule Type
               </label>
               <select
                 {...register('scheduleType')}
@@ -225,7 +225,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* HSN Code */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                HSN Code *
+                HSN Code
               </label>
               <input
                 {...register('hsn')}
@@ -240,7 +240,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* GST Percentage */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                GST Percentage *
+                GST Percentage
               </label>
               <select
                 {...register('gst', { valueAsNumber: true })}
@@ -291,7 +291,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* MRP */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                MRP (₹) *
+                MRP (₹)
               </label>
               <input
                 {...register('initialMrp', { valueAsNumber: true })}
@@ -309,7 +309,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Purchase Price */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Purchase Price (₹) *
+                Purchase Price (₹)
               </label>
               <input
                 {...register('initialPurchasePrice', { valueAsNumber: true })}
@@ -345,7 +345,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Stock Quantity */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Stock Quantity *
+                Stock Quantity
               </label>
               <input
                 {...register('initialStockQuantity', { valueAsNumber: true })}
@@ -362,7 +362,7 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
             {/* Expiry Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Expiry Date *
+                Expiry Date
               </label>
               <input
                 {...register('initialExpiryDate')}
