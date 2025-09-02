@@ -4,6 +4,7 @@ import { Sidebar } from './components/Layout/Sidebar';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { InventoryList } from './components/Inventory/InventoryList';
 import { SalesModule } from './components/Sales/SalesModule';
+import { LowStockPage } from './components/Inventory/LowStockPage';
 import { NotificationToast } from './components/Notifications/NotificationToast';
 import { initializeDatabase } from './database';
 import { usePharmacyStore } from './store';
@@ -40,7 +41,7 @@ function App() {
       case 'expiry':
         return <div className="p-6"><h1 className="text-2xl font-bold">Expiry Alerts</h1><p>Coming soon...</p></div>;
       case 'low-stock':
-        return <div className="p-6"><h1 className="text-2xl font-bold">Low Stock Alerts</h1><p>Coming soon...</p></div>;
+        return <LowStockPage />;
       case 'schedule-h1':
         return <div className="p-6"><h1 className="text-2xl font-bold">Schedule H1 Register</h1><p>Coming soon...</p></div>;
       case 'reports':
