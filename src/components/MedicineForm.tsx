@@ -2,7 +2,8 @@ import React, { useImperativeHandle, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, Package, Pill } from 'lucide-react';
+import { Save, Package, Pill, Sparkles } from 'lucide-react';
+import { googleAIService } from '../services/googleAI';
 
 const medicineSchema = z.object({
   name: z.string().min(1, 'Medicine name is required'),
@@ -42,13 +43,16 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
   initialData,
   className = ''
 }, ref) => {
+  const [generatingDescription, setGeneratingDescription] = React.useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     setValue,
-    watch
+    watch,
+    getValues
   } = useForm<MedicineFormData>({
     resolver: zodResolver(medicineSchema),
     defaultValues: {
@@ -80,6 +84,44 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
       setValue('initialPurchasePrice', aiData.mrp * 0.7);
     }
     if (aiData.expiryDate) setValue('initialExpiryDate', aiData.expiryDate);
+    
+    // Auto-generate description after a short delay to let form populate
+    setTimeout(() => {
+      generateDescription();
+    }, 1000);
+  };
+
+  const generateDescription = async () => {
+    if (!googleAIService.isConfigured()) {
+      return;
+    }
+
+    const formData = getValues();
+    
+    // Only generate if we have enough information
+    if (!formData.name && !formData.brandName) {
+      return;
+    }
+
+    setGeneratingDescription(true);
+    
+    try {
+      const description = await googleAIService.generateMedicineDescription({
+        name: formData.name,
+        genericName: formData.genericName,
+        brandName: formData.brandName,
+        dosage: formData.dosage,
+        medicineType: formData.medicineType,
+        manufacturer: formData.manufacturer,
+        scheduleType: formData.scheduleType
+      });
+      
+      setValue('description', description);
+    } catch (error) {
+      console.error('Error generating description:', error);
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   // Expose auto-fill function to parent component
@@ -256,7 +298,40 @@ export const MedicineForm = forwardRef<any, MedicineFormProps>(({
 
           {/* Description */}
           <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={generateDescription}
+                disabled={generatingDescription || !googleAIService.isConfigured()}
+                className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                {generatingDescription ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3 h-3" />
+                    <span>Generate with AI</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <textarea
+              {...register('description')}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="AI can generate a professional description based on the medicine information above, or you can write your own..."
+            />
+            {generatingDescription && (
+              <p className="mt-1 text-sm text-blue-600">AI is generating a professional description...</p>
+            )}
+          </div>
+        </div>
               Description
             </label>
             <textarea

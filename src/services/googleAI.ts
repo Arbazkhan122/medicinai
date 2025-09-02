@@ -191,4 +191,47 @@ class GoogleAIService {
   }
 }
 
+ async generateMedicineDescription(medicineData: {
+   name?: string;
+   genericName?: string;
+   brandName?: string;
+   dosage?: string;
+   medicineType?: string;
+   manufacturer?: string;
+   scheduleType?: string;
+ }): Promise<string> {
+   if (!this.model) {
+     throw new Error('Google AI not initialized. Please check your API key.');
+   }
+
+   try {
+     const prompt = `
+       Generate a professional, concise description for this medicine based on the provided information:
+       
+       Medicine Name: ${medicineData.name || 'Not specified'}
+       Generic Name: ${medicineData.genericName || 'Not specified'}
+       Brand Name: ${medicineData.brandName || 'Not specified'}
+       Dosage: ${medicineData.dosage || 'Not specified'}
+       Type: ${medicineData.medicineType || 'Not specified'}
+       Manufacturer: ${medicineData.manufacturer || 'Not specified'}
+       Schedule: ${medicineData.scheduleType || 'GENERAL'}
+       
+       Write a 2-3 sentence description that includes:
+       1. What the medicine is used for (therapeutic use)
+       2. How it should be taken/administered
+       3. Any important safety notes if it's a scheduled medicine
+       
+       Keep it professional, informative, and suitable for pharmacy records.
+       Return only the description text, no JSON or formatting.
+     `;
+
+     const result = await this.model.generateContent(prompt);
+     const response = await result.response;
+     return response.text().trim();
+   } catch (error) {
+     console.error('Error generating description:', error);
+     throw new Error('Failed to generate description');
+   }
+ }
+
 export const googleAIService = new GoogleAIService();
