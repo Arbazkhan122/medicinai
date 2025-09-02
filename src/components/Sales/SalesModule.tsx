@@ -8,18 +8,9 @@ import { ScheduleH1Service } from '../../services/scheduleH1';
 import { usePharmacyStore } from '../../store';
 import { format } from 'date-fns';
 
-interface CartItem {
-  medicine: Medicine;
-  batch: Batch;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
 export const SalesModule: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Medicine[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [prescriptionNumber, setPrescriptionNumber] = useState('');
@@ -28,7 +19,7 @@ export const SalesModule: React.FC = () => {
   const [discount, setDiscount] = useState(0);
   const [processing, setProcessing] = useState(false);
   
-  const { addNotification } = usePharmacyStore();
+  const { addNotification, cartItems, addToCart, removeFromCart, clearCart } = usePharmacyStore();
 
   useEffect(() => {
     if (searchQuery.length > 2) {
@@ -60,30 +51,7 @@ export const SalesModule: React.FC = () => {
       const selectedBatches = await FEFOService.selectBatchesForSale(medicine.id, requestedQuantity);
       
       for (const batch of selectedBatches) {
-        const existingItem = cart.find(item => 
-          item.medicine.id === medicine.id && item.batch.id === batch.id
-        );
-
-        if (existingItem) {
-          setCart(cart.map(item =>
-            item.medicine.id === medicine.id && item.batch.id === batch.id
-              ? { 
-                  ...item, 
-                  quantity: item.quantity + (batch.quantityToDispense || 0),
-                  totalPrice: (item.quantity + (batch.quantityToDispense || 0)) * item.unitPrice
-                }
-              : item
-          ));
-        } else {
-          const newItem: CartItem = {
-            medicine,
-            batch,
-            quantity: batch.quantityToDispense || 0,
-            unitPrice: batch.sellingPrice,
-            totalPrice: (batch.quantityToDispense || 0) * batch.sellingPrice
-          };
-          setCart([...cart, newItem]);
-        }
+        addToCart(medicine, batch, batch.quantityToDispense || 0);
       }
 
       addNotification('success', `Added ${medicine.brandName} to cart`);
@@ -94,34 +62,27 @@ export const SalesModule: React.FC = () => {
     }
   };
 
-  const removeFromCart = (medicineId: string, batchId: string) => {
-    setCart(cart.filter(item => 
-      !(item.medicine.id === medicineId && item.batch.id === batchId)
-    ));
-  };
-
   const updateQuantity = (medicineId: string, batchId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(medicineId, batchId);
       return;
     }
 
-    setCart(cart.map(item =>
+    // Update quantity in store
+    const item = cartItems.find(item => 
       item.medicine.id === medicineId && item.batch.id === batchId
-        ? { 
-            ...item, 
-            quantity: newQuantity,
-            totalPrice: newQuantity * item.unitPrice
-          }
-        : item
-    ));
+    );
+    if (item) {
+      removeFromCart(medicineId, batchId);
+      addToCart(item.medicine, item.batch, newQuantity);
+    }
   };
 
   const calculateTotals = () => {
-    const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.quantity * item.batch.sellingPrice), 0);
     const discountAmount = (subtotal * discount) / 100;
-    const gstAmount = cart.reduce((sum, item) => {
-      const itemTotal = item.totalPrice - (item.totalPrice * discount / 100);
+    const gstAmount = cartItems.reduce((sum, item) => {
+      const itemTotal = (item.quantity * item.batch.sellingPrice) - ((item.quantity * item.batch.sellingPrice) * discount / 100);
       return sum + (itemTotal * item.medicine.gst / 100);
     }, 0);
     const total = subtotal - discountAmount + gstAmount;
@@ -130,7 +91,7 @@ export const SalesModule: React.FC = () => {
   };
 
   const processSale = async () => {
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
       addNotification('error', 'Cart is empty');
       return;
     }
@@ -142,15 +103,15 @@ export const SalesModule: React.FC = () => {
       const invoiceNumber = `INV-${Date.now()}`;
 
       // Create sale items
-      const saleItems: SaleItem[] = cart.map(item => ({
+      const saleItems: SaleItem[] = cartItems.map(item => ({
         id: crypto.randomUUID(),
         medicineId: item.medicine.id,
         medicineName: item.medicine.brandName,
         batchId: item.batch.id,
         batchNumber: item.batch.batchNumber,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
+        unitPrice: item.batch.sellingPrice,
+        totalPrice: item.quantity * item.batch.sellingPrice,
         gstAmount: (item.totalPrice * item.medicine.gst) / 100
       }));
 
@@ -174,7 +135,7 @@ export const SalesModule: React.FC = () => {
       await db.sales.add(sale);
 
       // Update stock levels
-      for (const item of cart) {
+      for (const item of cartItems) {
         const batch = await db.batches.get(item.batch.id);
         if (batch) {
           await db.batches.update(item.batch.id, {
@@ -184,7 +145,7 @@ export const SalesModule: React.FC = () => {
       }
 
       // Add Schedule H1 entries if needed
-      for (const item of cart) {
+      for (const item of cartItems) {
         if (item.medicine.scheduleType === 'H1') {
           await ScheduleH1Service.addEntry({
             medicineId: item.medicine.id,
@@ -201,7 +162,7 @@ export const SalesModule: React.FC = () => {
       }
 
       // Clear form
-      setCart([]);
+      clearCart();
       setCustomerName('');
       setCustomerPhone('');
       setPrescriptionNumber('');
@@ -289,9 +250,9 @@ export const SalesModule: React.FC = () => {
               <ShoppingCart className="w-5 h-5 text-gray-400" />
             </div>
 
-            {cart.length > 0 ? (
+            {cartItems.length > 0 ? (
               <div className="space-y-4">
-                {cart.map((item, index) => (
+                {cartItems.map((item, index) => (
                   <div key={`${item.medicine.id}-${item.batch.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{item.medicine.brandName}</h3>
@@ -299,7 +260,7 @@ export const SalesModule: React.FC = () => {
                       <p className="text-sm text-gray-600">
                         Exp: {format(new Date(item.batch.expiryDate), 'MMM yyyy')}
                       </p>
-                      <p className="text-sm text-gray-600">₹{item.unitPrice} each</p>
+                      <p className="text-sm text-gray-600">₹{item.batch.sellingPrice} each</p>
                     </div>
                     
                     <div className="flex items-center space-x-3">
@@ -311,7 +272,7 @@ export const SalesModule: React.FC = () => {
                         onChange={(e) => updateQuantity(item.medicine.id, item.batch.id, parseInt(e.target.value))}
                         className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
                       />
-                      <span className="font-medium text-gray-900">₹{item.totalPrice.toFixed(2)}</span>
+                      <span className="font-medium text-gray-900">₹{(item.quantity * item.batch.sellingPrice).toFixed(2)}</span>
                       <button
                         onClick={() => removeFromCart(item.medicine.id, item.batch.id)}
                         className="text-red-600 hover:text-red-800"
@@ -449,7 +410,7 @@ export const SalesModule: React.FC = () => {
 
               <button
                 onClick={processSale}
-                disabled={cart.length === 0 || processing}
+                disabled={cartItems.length === 0 || processing}
                 className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
               >
                 {processing ? (

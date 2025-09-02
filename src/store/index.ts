@@ -14,6 +14,7 @@ interface PharmacyStore {
   }>;
   addToCart: (medicine: Medicine, batch: Batch, quantity: number) => void;
   removeFromCart: (medicineId: string, batchId: string) => void;
+  updateCartQuantity: (medicineId: string, batchId: string, quantity: number) => void;
   clearCart: () => void;
   
   // Notifications
@@ -58,6 +59,15 @@ export const usePharmacyStore = create<PharmacyStore>((set, get) => ({
     set({
       cartItems: get().cartItems.filter(
         item => !(item.medicine.id === medicineId && item.batch.id === batchId)
+      )
+    });
+  },
+  updateCartQuantity: (medicineId, batchId, quantity) => {
+    set({
+      cartItems: get().cartItems.map(item =>
+        item.medicine.id === medicineId && item.batch.id === batchId
+          ? { ...item, quantity }
+          : item
       )
     });
   },
