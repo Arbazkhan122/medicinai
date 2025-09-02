@@ -124,7 +124,6 @@ export const AddMedicinePage: React.FC<AddMedicinePageProps> = ({
           <div className="lg:col-span-1 space-y-6">
             <ImageUpload
               onImageSelected={handleImageSelected}
-              onTextExtracted={handleTextExtracted}
               onAIDataExtracted={handleAIDataExtracted}
             />
           </div>

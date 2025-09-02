@@ -1,20 +1,33 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 class GoogleAIService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
+  private genAI: GoogleGenerativeAI | null = null;
+  private model: any = null;
 
   constructor() {
+    this.initializeAI();
+  }
+
+  private initializeAI() {
     const apiKey = import.meta.env.VITE_GOOGLE_AI_API_KEY;
     if (!apiKey) {
-      throw new Error('Google AI API key not found. Please add VITE_GOOGLE_AI_API_KEY to your .env file');
+      console.warn('Google AI API key not found. Please add VITE_GOOGLE_AI_API_KEY to your .env file');
+      return;
     }
     
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    try {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+    } catch (error) {
+      console.error('Failed to initialize Google AI:', error);
+    }
   }
 
   async extractMedicineInfo(imageFile: File): Promise<any> {
+    if (!this.model) {
+      throw new Error('Google AI not initialized. Please check your API key.');
+    }
+
     try {
       // Convert image to base64
       const imageData = await this.fileToGenerativePart(imageFile);
@@ -50,7 +63,8 @@ class GoogleAIService {
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+          const parsedData = JSON.parse(jsonMatch[0]);
+          return parsedData;
         }
         throw new Error('No valid JSON found in response');
       } catch (parseError) {
@@ -59,11 +73,18 @@ class GoogleAIService {
       }
     } catch (error) {
       console.error('Error extracting medicine info:', error);
+      if (error instanceof Error && error.message.includes('API_KEY')) {
+        throw new Error('Invalid API key. Please check your Google AI API key.');
+      }
       throw error;
     }
   }
 
   async processExtractedText(extractedText: string): Promise<any> {
+    if (!this.model) {
+      throw new Error('Google AI not initialized. Please check your API key.');
+    }
+
     try {
       const prompt = `
         Parse this extracted text from a medicine package and convert it to structured JSON:
@@ -126,6 +147,11 @@ class GoogleAIService {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  // Check if API is properly configured
+  isConfigured(): boolean {
+    return this.model !== null;
   }
 }
 
