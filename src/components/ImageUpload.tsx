@@ -60,7 +60,7 @@ Manufacturer: ${aiData.manufacturer || 'Not detected'}
 Batch No: ${aiData.batchNumber || 'Not detected'}
 Expiry Date: ${aiData.expiryDate || 'Not detected'}
 MRP: ₹${aiData.mrp || 'Not detected'}
-HSN: ${aiData.hsn || 'Not detected'}
+HSN: ${aiData.hsn || 'Not detected'}${aiData.hsnGenerated ? ' (Auto-generated)' : ''}
 Schedule: ${aiData.scheduleType || 'GENERAL'}
 Confidence: ${aiData.confidence || 0}%`;
 

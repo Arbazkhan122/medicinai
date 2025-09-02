@@ -13,6 +13,37 @@ class GoogleAIService {
     }
   }
 
+  // HSN code mapping for common medicine types
+  private getDefaultHSN(medicineType: string, scheduleType: string): string {
+    const type = medicineType?.toLowerCase() || '';
+    const schedule = scheduleType?.toLowerCase() || '';
+    
+    // Schedule-based HSN codes
+    if (schedule === 'h1' || schedule === 'x') {
+      return '30049011'; // Narcotic and psychotropic substances
+    }
+    
+    // Type-based HSN codes
+    if (type.includes('tablet') || type.includes('capsule')) {
+      return '30049099'; // Medicaments in tablet/capsule form
+    } else if (type.includes('syrup') || type.includes('liquid') || type.includes('suspension')) {
+      return '30049091'; // Liquid medicaments
+    } else if (type.includes('injection') || type.includes('vial')) {
+      return '30049092'; // Injectable medicaments
+    } else if (type.includes('cream') || type.includes('ointment') || type.includes('gel')) {
+      return '30049093'; // Topical medicaments
+    } else if (type.includes('drops') || type.includes('eye') || type.includes('ear')) {
+      return '30049094'; // Ophthalmic/otic preparations
+    } else if (type.includes('inhaler') || type.includes('spray')) {
+      return '30049095'; // Respiratory preparations
+    } else if (type.includes('powder')) {
+      return '30049096'; // Medicaments in powder form
+    }
+    
+    // Default HSN for general medicines
+    return '30049099';
+  }
+
   async extractMedicineInfo(imageFile: File): Promise<any> {
     if (!this.model) {
       throw new Error('Google AI API key not found. Please add VITE_GOOGLE_AI_API_KEY to your .env file.');
@@ -54,6 +85,13 @@ class GoogleAIService {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsedData = JSON.parse(jsonMatch[0]);
+          
+          // Auto-generate HSN code if not detected
+          if (!parsedData.hsn || parsedData.hsn === null) {
+            parsedData.hsn = this.getDefaultHSN(parsedData.medicineType, parsedData.scheduleType);
+            parsedData.hsnGenerated = true; // Flag to indicate it was auto-generated
+          }
+          
           return parsedData;
         }
         throw new Error('No valid JSON found in response');
@@ -109,7 +147,15 @@ class GoogleAIService {
       try {
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+          const parsedData = JSON.parse(jsonMatch[0]);
+          
+          // Auto-generate HSN code if not detected
+          if (!parsedData.hsn || parsedData.hsn === null) {
+            parsedData.hsn = this.getDefaultHSN(parsedData.medicineType, parsedData.scheduleType);
+            parsedData.hsnGenerated = true; // Flag to indicate it was auto-generated
+          }
+          
+          return parsedData;
         }
         throw new Error('No valid JSON found in response');
       } catch (parseError) {
