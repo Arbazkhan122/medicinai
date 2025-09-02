@@ -13,6 +13,7 @@ import { Medicine, Batch } from '../../types';
 import { usePharmacyStore } from '../../store';
 import { format } from 'date-fns';
 import { AddMedicinePage } from './AddMedicinePage';
+import { RestockPage } from './RestockPage';
 
 interface LowStockItem {
   medicine: Medicine;
