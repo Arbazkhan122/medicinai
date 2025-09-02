@@ -256,7 +256,9 @@ export const LowStockPage: React.FC = () => {
                                 <div className="flex-1">
                                   <p className="font-medium text-gray-900">Batch: {batch.batchNumber}</p>
                                   <p className="text-sm text-gray-600">
-                                    Exp: {format(new Date(batch.expiryDate), 'MMM dd, yyyy')}
+                                    Exp: {batch.expiryDate && !isNaN(new Date(batch.expiryDate).getTime()) 
+                                      ? format(new Date(batch.expiryDate), 'MMM dd, yyyy')
+                                      : 'N/A'}
                                   </p>
                                   <p className="text-sm text-gray-600">
                                     Stock: <span className={batch.currentStock === 0 ? 'text-red-600 font-medium' : batch.currentStock <= 3 ? 'text-yellow-600 font-medium' : 'text-gray-900'}>{batch.currentStock}</span> / Min: {batch.minStock}
