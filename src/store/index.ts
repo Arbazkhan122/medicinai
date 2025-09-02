@@ -6,10 +6,6 @@ interface PharmacyStore {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   
-  // Search state
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  
   // Cart state for sales
   cartItems: Array<{
     medicine: Medicine;
@@ -35,10 +31,6 @@ export const usePharmacyStore = create<PharmacyStore>((set, get) => ({
   // UI state
   sidebarOpen: false,
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  
-  // Search state
-  searchQuery: '',
-  setSearchQuery: (query) => set({ searchQuery: query }),
   
   // Cart state
   cartItems: [],
