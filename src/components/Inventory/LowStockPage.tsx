@@ -13,7 +13,7 @@ import { Medicine, Batch } from '../../types';
 import { usePharmacyStore } from '../../store';
 import { format } from 'date-fns';
 import { AddMedicinePage } from './AddMedicinePage';
-import { RestockPage } from './RestockPage';
+import { RestockManagementPage } from './RestockManagementPage';
 
 interface LowStockItem {
   medicine: Medicine;
@@ -26,8 +26,7 @@ export const LowStockPage: React.FC = () => {
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddMedicine, setShowAddMedicine] = useState(false);
-  const [showRestockPage, setShowRestockPage] = useState(false);
-  const [restockMedicine, setRestockMedicine] = useState<Medicine | null>(null);
+  const [showRestockManagement, setShowRestockManagement] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { addNotification } = usePharmacyStore();
 
@@ -82,14 +81,8 @@ export const LowStockPage: React.FC = () => {
     }
   };
 
-  const handleRestockClick = (medicine: Medicine) => {
-    setRestockMedicine(medicine);
-    setShowRestockPage(true);
-  };
-
-  const handleBackFromRestock = () => {
-    setShowRestockPage(false);
-    setRestockMedicine(null);
+  const handleBackFromRestockManagement = () => {
+    setShowRestockManagement(false);
     loadLowStockItems();
   };
 
@@ -113,8 +106,8 @@ export const LowStockPage: React.FC = () => {
     );
   }
 
-  if (showRestockPage && restockMedicine) {
-    return <RestockPage medicine={restockMedicine} onBack={handleBackFromRestock} />;
+  if (showRestockManagement) {
+    return <RestockManagementPage onBack={handleBackFromRestockManagement} />;
   }
 
   const getStockStatus = (item: LowStockItem) => {
@@ -141,6 +134,13 @@ export const LowStockPage: React.FC = () => {
           <p className="text-gray-600">Manage medicines with low stock levels and restock inventory</p>
         </div>
         <div className="flex space-x-3">
+          <button
+            onClick={() => setShowRestockManagement(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Package className="w-4 h-4" />
+            Bulk Restock
+          </button>
           <button
             onClick={() => setShowAddMedicine(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -284,9 +284,7 @@ export const LowStockPage: React.FC = () => {
                     {/* Actions */}
                     <div className="flex flex-col space-y-2 ml-6">
                       <button
-                        onClick={() => {
-                          handleRestockClick(item.medicine);
-                        }}
+                        onClick={() => setShowRestockManagement(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
                       >
                         <ArrowRight className="w-4 h-4" />
