@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 
 interface RestockItem {
   medicine: Medicine;
+  totalStock?: number;
   quantity: number;
   batchNumber: string;
   expiryDate: string;
@@ -29,12 +30,16 @@ interface RestockItem {
   supplierId: string;
 }
 
+interface MedicineWithStock extends Medicine {
+  totalStock: number;
+}
+
 interface RestockManagementPageProps {
   onBack: () => void;
 }
 
 export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ onBack }) => {
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [medicines, setMedicines] = useState<MedicineWithStock[]>([]);
   const [selectedMedicines, setSelectedMedicines] = useState<Set<string>>(new Set());
   const [restockCart, setRestockCart] = useState<RestockItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +81,24 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
   const loadMedicines = async () => {
     try {
       const allMedicines = await db.medicines.toArray();
-      setMedicines(allMedicines);
+      const medicinesWithStock: MedicineWithStock[] = [];
+      
+      for (const medicine of allMedicines) {
+        const batches = await db.batches
+          .where('medicineId')
+          .equals(medicine.id)
+          .filter(batch => batch.currentStock > 0 && new Date(batch.expiryDate) > new Date())
+          .toArray();
+        
+        const totalStock = batches.reduce((sum, batch) => sum + batch.currentStock, 0);
+        
+        medicinesWithStock.push({
+          ...medicine,
+          totalStock
+        });
+      }
+      
+      setMedicines(medicinesWithStock);
     } catch (error) {
       console.error('Error loading medicines:', error);
       addNotification('error', 'Failed to load medicines');
@@ -85,7 +107,7 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
     }
   };
 
-  const handleMedicineSelect = async (medicine: Medicine, checked: boolean) => {
+  const handleMedicineSelect = async (medicine: MedicineWithStock, checked: boolean) => {
     const newSelected = new Set(selectedMedicines);
     
     if (checked) {
@@ -97,6 +119,7 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
       // Add to restock cart with current/latest values
       const restockItem: RestockItem = {
         medicine,
+        totalStock: medicine.totalStock,
         quantity: 100,
         batchNumber: `BATCH-${Date.now()}-${medicine.id.slice(-4)}`,
         expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
@@ -281,6 +304,15 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
                                 {medicine.brandName || medicine.name}
                               </h3>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                medicine.totalStock === 0 
+                                  ? 'bg-red-100 text-red-700' 
+                                  : medicine.totalStock <= 10
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                                {medicine.totalStock} units
+                              </span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 medicine.scheduleType === 'H1' 
                                   ? 'bg-red-100 text-red-700' 
                                   : medicine.scheduleType === 'H'
@@ -293,6 +325,15 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
                             <p className="text-sm text-gray-600">{medicine.name}</p>
                             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                               <span>Manufacturer: {medicine.manufacturer}</span>
+                              <span className={`font-medium ${
+                                medicine.totalStock === 0 
+                                  ? 'text-red-600' 
+                                  : medicine.totalStock <= 10
+                                  ? 'text-yellow-600'
+                                  : 'text-green-600'
+                              }`}>
+                                Current Stock: {medicine.totalStock}
+                              </span>
                               <span>HSN: {medicine.hsn}</span>
                               <span>GST: {medicine.gst}%</span>
                             </div>
