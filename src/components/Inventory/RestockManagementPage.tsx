@@ -382,6 +382,43 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
                 </button>
               </div>
             )}
+
+            {/* Quick Actions */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    // Select all low stock medicines
+                    const lowStockMedicines = medicines.filter(m => {
+                      // This would need to check actual stock levels
+                      return true; // Simplified for now
+                    });
+                    lowStockMedicines.forEach(medicine => {
+                      if (!selectedMedicines.has(medicine.id)) {
+                        handleMedicineSelect(medicine, true);
+                      }
+                    });
+                    addNotification('info', 'Added all low stock medicines to cart');
+                  }}
+                  className="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Add All Low Stock</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setRestockCart([]);
+                    setSelectedMedicines(new Set());
+                    addNotification('info', 'Cart cleared');
+                  }}
+                  className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
+                >
+                  Clear Cart
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -566,46 +603,8 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
               </div>
             </div>
           </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
-            <button
-              onClick={() => {
-                // Select all low stock medicines
-                const lowStockMedicines = medicines.filter(m => {
-                  // This would need to check actual stock levels
-                  return true; // Simplified for now
-                });
-                lowStockMedicines.forEach(medicine => {
-                  if (!selectedMedicines.has(medicine.id)) {
-                    handleMedicineSelect(medicine, true);
-                  }
-                });
-                addNotification('info', 'Added all low stock medicines to cart');
-              }}
-              className="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors flex items-center justify-center space-x-2"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              <span>Add All Low Stock</span>
-            </button>
-            
-            <button
-              onClick={() => {
-                setRestockCart([]);
-                setSelectedMedicines(new Set());
-                addNotification('info', 'Cart cleared');
-              }}
-              className="w-full bg-gray-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
-            >
-              Clear Cart
-            </button>
-          </div>
         </div>
-      </div>
+      )}
     </div>
-  </div>
-);
+  );
 };
