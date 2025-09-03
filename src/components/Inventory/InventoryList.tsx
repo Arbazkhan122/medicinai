@@ -321,38 +321,3 @@ export const InventoryList: React.FC = () => {
     </div>
   );
 };
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">{medicine.brandName}</h3>
-                    <p className="text-gray-600 mt-1">{medicine.name}</p>
-                    {medicine.dosage && (
-                      <p className="text-sm text-gray-500">Dosage: {medicine.dosage}</p>
-                    )}
-                    {medicine.medicineType && (
-                      <p className="text-sm text-gray-500">Type: {medicine.medicineType}</p>
-                    )}
-                    <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                      <span>Manufacturer: {medicine.manufacturer}</span>
-                      <span>HSN: {medicine.hsn}</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        medicine.scheduleType === 'H1' 
-                          ? 'bg-red-100 text-red-800' 
-                          : medicine.scheduleType === 'H'
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {medicine.scheduleType}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm text-gray-500">GST: {medicine.gst}%</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
