@@ -27,6 +27,7 @@ export const LowStockPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAddMedicine, setShowAddMedicine] = useState(false);
   const [showRestockManagement, setShowRestockManagement] = useState(false);
+  const [selectedMedicineForRestock, setSelectedMedicineForRestock] = useState<Medicine | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { addNotification } = usePharmacyStore();
 
@@ -37,39 +38,44 @@ export const LowStockPage: React.FC = () => {
   const loadLowStockItems = async () => {
     setLoading(true);
     try {
-      // Get all batches with stock <= 3 or below minimum stock
-      const lowStockBatches = await db.batches
-        .filter(batch => batch.currentStock <= 3 || batch.currentStock <= batch.minStock)
-        .toArray();
-
-      // Group by medicine
-      const medicineGroups = new Map<string, Batch[]>();
-      
-      for (const batch of lowStockBatches) {
-        if (!medicineGroups.has(batch.medicineId)) {
-          medicineGroups.set(batch.medicineId, []);
-        }
-        medicineGroups.get(batch.medicineId)!.push(batch);
-      }
-
-      // Get medicine details and create low stock items
+      const allMedicines = await db.medicines.toArray();
       const lowStockData: LowStockItem[] = [];
       
-      for (const [medicineId, batches] of medicineGroups) {
-        const medicine = await db.medicines.get(medicineId);
-        if (medicine) {
-          const totalStock = batches.reduce((sum, batch) => sum + batch.currentStock, 0);
-          const lowestStock = Math.min(...batches.map(batch => batch.currentStock));
-          
-          lowStockData.push({
-            medicine,
-            batches,
-            totalStock,
-            lowestStock
-          });
+      for (const medicine of allMedicines) {
+        const batchesForMedicine = await db.batches
+          .where('medicineId')
+          .equals(medicine.id)
+          .toArray();
+
+        // Filter out expired or zero-stock batches for active consideration
+        const activeBatches = batchesForMedicine.filter(batch =>
+          batch.currentStock > 0 && new Date(batch.expiryDate) > new Date()
+        );
+
+        const totalStock = activeBatches.reduce((sum, batch) => sum + batch.currentStock, 0);
+        const lowestStock = activeBatches.length > 0 ? Math.min(...activeBatches.map(batch => batch.currentStock)) : 0;
+        const hasBatchBelowMinStock = activeBatches.some(batch => batch.currentStock <= batch.minStock);
+
+        // Define "low stock" for the medicine to be displayed on this page
+        let isLowStock = false;
+        if (totalStock === 0) {
+            isLowStock = true; // Completely out of stock
+        } else if (totalStock <= 10) {
+            isLowStock = true; // Overall low stock threshold
+        } else if (hasBatchBelowMinStock && totalStock <= 50) {
+            // If there's a batch below its min stock AND total stock isn't very high (e.g., <= 50)
+            isLowStock = true;
+        }
+
+        if (isLowStock) {
+            lowStockData.push({
+                medicine,
+                batches: activeBatches, // Only include active batches
+                totalStock,
+                lowestStock
+            });
         }
       }
-
       // Sort by lowest stock first
       lowStockData.sort((a, b) => a.lowestStock - b.lowestStock);
       setLowStockItems(lowStockData);
@@ -91,6 +97,11 @@ export const LowStockPage: React.FC = () => {
     setShowAddMedicine(false);
   };
 
+  const handleRestockComplete = () => {
+    loadLowStockItems();
+    setSelectedMedicineForRestock(null);
+  };
+
   const filteredItems = lowStockItems.filter(item =>
     item.medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.medicine.brandName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,7 +117,14 @@ export const LowStockPage: React.FC = () => {
     );
   }
 
-  if (showRestockManagement) {
+  if (selectedMedicineForRestock) {
+    return (
+      <RestockPage
+        medicine={selectedMedicineForRestock}
+        onBack={() => setSelectedMedicineForRestock(null)}
+      />
+    );
+  } else if (showRestockManagement) {
     return <RestockManagementPage onBack={handleBackFromRestockManagement} />;
   }
 
@@ -284,7 +302,10 @@ export const LowStockPage: React.FC = () => {
                     {/* Actions */}
                     <div className="flex flex-col space-y-2 ml-6">
                       <button
-                        onClick={() => setShowRestockManagement(true)}
+                        onClick={() => {
+                          setSelectedMedicineForRestock(item.medicine);
+                          setShowRestockManagement(false); // Ensure bulk restock is not active
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
                       >
                         <ArrowRight className="w-4 h-4" />
