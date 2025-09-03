@@ -44,6 +44,31 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
   const [editingItem, setEditingItem] = useState<RestockItem | null>(null);
   const { addNotification } = usePharmacyStore();
 
+  // Function to get current medicine data
+  const getCurrentMedicineData = async (medicineId: string): Promise<Medicine | null> => {
+    try {
+      return await db.medicines.get(medicineId);
+    } catch (error) {
+      console.error('Error fetching current medicine data:', error);
+      return null;
+    }
+  };
+
+  // Function to get latest batch data for a medicine
+  const getLatestBatchData = async (medicineId: string): Promise<Batch | null> => {
+    try {
+      const batches = await db.batches
+        .where('medicineId')
+        .equals(medicineId)
+        .reverse()
+        .sortBy('receivedDate');
+      return batches.length > 0 ? batches[0] : null;
+    } catch (error) {
+      console.error('Error fetching latest batch data:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadMedicines();
   }, []);
@@ -60,20 +85,24 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
     }
   };
 
-  const handleMedicineSelect = (medicine: Medicine, checked: boolean) => {
+  const handleMedicineSelect = async (medicine: Medicine, checked: boolean) => {
     const newSelected = new Set(selectedMedicines);
     
     if (checked) {
       newSelected.add(medicine.id);
-      // Add to restock cart with default values
+      
+      // Get latest batch data for better defaults
+      const latestBatch = await getLatestBatchData(medicine.id);
+      
+      // Add to restock cart with current/latest values
       const restockItem: RestockItem = {
         medicine,
         quantity: 100,
         batchNumber: `BATCH-${Date.now()}-${medicine.id.slice(-4)}`,
         expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
-        purchasePrice: 0,
-        sellingPrice: 0,
-        mrp: 0,
+        purchasePrice: latestBatch?.purchasePrice || 0,
+        sellingPrice: latestBatch?.sellingPrice || 0,
+        mrp: latestBatch?.mrp || 0,
         minStock: 10,
         maxStock: 500,
         supplierId: 'DEFAULT'
@@ -301,6 +330,7 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
                           <button
                             onClick={() => setEditingItem(item)}
                             className="text-blue-600 hover:text-blue-800 p-1"
+                            title="Edit restock details"
                           >
                             <Edit3 className="w-3 h-3" />
                           </button>
@@ -590,8 +620,15 @@ export const RestockManagementPage: React.FC<RestockManagementPageProps> = ({ on
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    updateRestockItem(editingItem.medicine.id, editingItem);
+                  onClick={async () => {
+                    // Refresh medicine data before saving
+                    const currentMedicine = await getCurrentMedicineData(editingItem.medicine.id);
+                    if (currentMedicine) {
+                      const updatedItem = { ...editingItem, medicine: currentMedicine };
+                      updateRestockItem(editingItem.medicine.id, updatedItem);
+                    } else {
+                      updateRestockItem(editingItem.medicine.id, editingItem);
+                    }
                     setEditingItem(null);
                     addNotification('success', 'Restock details updated');
                   }}
